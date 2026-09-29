@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,7 +26,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -46,6 +46,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
 
+
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,23 +58,22 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+/* =========================================================
+   MAIN APP
+   ========================================================= */
+
 @Composable
 fun HygieneControlApp(context: Context) {
 
-    var currentScreen by remember { mutableStateOf("home") }
+    var currentScreen by remember {
+        mutableStateOf("home")
+    }
 
     when (currentScreen) {
 
-        "settings" -> {
-            RestaurantSettings(
-                context = context,
-                onBack = {
-                    currentScreen = "home"
-                }
-            )
-        }
-
         "hygiene" -> {
+
             HygieneChecks(
                 context = context,
                 onBack = {
@@ -82,13 +82,24 @@ fun HygieneControlApp(context: Context) {
             )
         }
 
+        "settings" -> {
+
+            RestaurantSettings(
+                context = context,
+                onBack = {
+                    currentScreen = "home"
+                }
+            )
+        }
+
         else -> {
+
             ProfessionalDashboard(
-                onSettingsClick = {
-                    currentScreen = "settings"
-                },
                 onHygieneClick = {
                     currentScreen = "hygiene"
+                },
+                onSettingsClick = {
+                    currentScreen = "settings"
                 }
             )
         }
@@ -102,20 +113,19 @@ fun HygieneControlApp(context: Context) {
 
 @Composable
 fun ProfessionalDashboard(
-    onSettingsClick: () -> Unit,
-    onHygieneClick: () -> Unit
+    onHygieneClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
 
-    val darkBackground = Color(0xFF101414)
+    val background = Color(0xFF101414)
     val cardColor = Color(0xFF1A2020)
     val green = Color(0xFFB7D52B)
     val white = Color(0xFFF5F5F5)
     val grey = Color(0xFF9AA3A3)
-    val orange = Color(0xFFFFB74D)
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = darkBackground
+        color = background
     ) {
 
         Column(
@@ -136,7 +146,9 @@ fun ProfessionalDashboard(
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(
+                    modifier = Modifier.height(4.dp)
+                )
 
                 Text(
                     text = "Restaurant Food Safety Management",
@@ -144,7 +156,9 @@ fun ProfessionalDashboard(
                     fontSize = 14.sp
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(
+                    modifier = Modifier.height(24.dp)
+                )
 
                 Text(
                     text = "Today's Overview",
@@ -153,7 +167,9 @@ fun ProfessionalDashboard(
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -171,7 +187,7 @@ fun ProfessionalDashboard(
                         modifier = Modifier.weight(1f),
                         number = "0",
                         title = "Pending",
-                        color = orange
+                        color = Color(0xFFFFB74D)
                     )
 
                     StatusCard(
@@ -182,9 +198,14 @@ fun ProfessionalDashboard(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(26.dp))
+                Spacer(
+                    modifier = Modifier.height(26.dp)
+                )
 
-                SectionTitle("Daily Checks", green)
+                SectionTitle(
+                    title = "Daily Checks",
+                    color = green
+                )
 
                 DashboardActionCard(
                     title = "Hygiene Checks",
@@ -211,9 +232,14 @@ fun ProfessionalDashboard(
                     subtitleColor = grey
                 )
 
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(
+                    modifier = Modifier.height(22.dp)
+                )
 
-                SectionTitle("Compliance", green)
+                SectionTitle(
+                    title = "Compliance",
+                    color = green
+                )
 
                 DashboardActionCard(
                     title = "Inspection Records",
@@ -239,9 +265,14 @@ fun ProfessionalDashboard(
                     subtitleColor = grey
                 )
 
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(
+                    modifier = Modifier.height(22.dp)
+                )
 
-                SectionTitle("Reports", green)
+                SectionTitle(
+                    title = "Reports",
+                    color = green
+                )
 
                 DashboardActionCard(
                     title = "Inspection Report",
@@ -259,7 +290,9 @@ fun ProfessionalDashboard(
                     subtitleColor = grey
                 )
 
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(
+                    modifier = Modifier.height(22.dp)
+                )
 
                 Card(
                     modifier = Modifier
@@ -291,7 +324,9 @@ fun ProfessionalDashboard(
                                 fontWeight = FontWeight.Bold
                             )
 
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(
+                                modifier = Modifier.height(4.dp)
+                            )
 
                             Text(
                                 text = "Restaurant information",
@@ -308,7 +343,9 @@ fun ProfessionalDashboard(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
             }
 
             BottomNavigation(
@@ -323,7 +360,7 @@ fun ProfessionalDashboard(
 
 
 /* =========================================================
-   HYGIENE CHECKS
+   HYGIENE CHECK SCREEN
    ========================================================= */
 
 @Composable
@@ -364,20 +401,24 @@ fun HygieneChecks(
         mutableStateOf(false)
     }
 
+    val background = Color(0xFF101414)
     val white = Color.White
     val grey = Color(0xFF9AA3A3)
     val green = Color(0xFFB7D52B)
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF101414)
+        color = background
     ) {
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(
+                    rememberScrollState()
+                )
                 .imePadding()
+                .navigationBarsPadding()
                 .padding(20.dp)
         ) {
 
@@ -387,11 +428,14 @@ fun HygieneChecks(
 
                 Text(
                     text = "← Back",
-                    color = green
+                    color = green,
+                    fontSize = 16.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
 
             Text(
                 text = "Hygiene Check",
@@ -406,27 +450,23 @@ fun HygieneChecks(
                 fontSize = 14.sp
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
 
 
-            /* DATE */
+            /* =================================================
+               DATE PICKER
+               ================================================= */
 
-            OutlinedTextField(
-                value = recordDate,
-                onValueChange = {},
-                readOnly = true,
-                label = {
-                    Text("Record Date")
-                },
-                placeholder = {
-                    Text("Select date")
-                },
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 14.dp)
                     .clickable {
 
-                        val calendar = Calendar.getInstance()
+                        val calendar =
+                            Calendar.getInstance()
 
                         DatePickerDialog(
                             context,
@@ -445,35 +485,51 @@ fun HygieneChecks(
                             calendar.get(Calendar.MONTH),
                             calendar.get(Calendar.DAY_OF_MONTH)
                         ).show()
+                    }
+            ) {
+
+                OutlinedTextField(
+                    value = recordDate,
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    label = {
+                        Text("Record Date")
                     },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = white,
-                    unfocusedTextColor = white,
-                    focusedLabelColor = green,
-                    unfocusedLabelColor = grey,
-                    cursorColor = green
+                    placeholder = {
+                        Text("Select date")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+
+                        disabledTextColor =
+                            Color.White,
+
+                        disabledLabelColor =
+                            Color(0xFFB7D52B),
+
+                        disabledPlaceholderColor =
+                            Color(0xFF9AA3A3),
+
+                        disabledBorderColor =
+                            Color(0xFF777777)
+                    )
                 )
-            )
+            }
 
 
-            /* TIME */
+            /* =================================================
+               TIME PICKER
+               ================================================= */
 
-            OutlinedTextField(
-                value = time,
-                onValueChange = {},
-                readOnly = true,
-                label = {
-                    Text("Time")
-                },
-                placeholder = {
-                    Text("Select time")
-                },
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 14.dp)
                     .clickable {
 
-                        val calendar = Calendar.getInstance()
+                        val calendar =
+                            Calendar.getInstance()
 
                         TimePickerDialog(
                             context,
@@ -487,27 +543,56 @@ fun HygieneChecks(
 
                                 saved = false
                             },
-                            calendar.get(Calendar.HOUR_OF_DAY),
-                            calendar.get(Calendar.MINUTE),
+                            calendar.get(
+                                Calendar.HOUR_OF_DAY
+                            ),
+                            calendar.get(
+                                Calendar.MINUTE
+                            ),
                             true
                         ).show()
+                    }
+            ) {
+
+                OutlinedTextField(
+                    value = time,
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    label = {
+                        Text("Time")
                     },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = white,
-                    unfocusedTextColor = white,
-                    focusedLabelColor = green,
-                    unfocusedLabelColor = grey,
-                    cursorColor = green
+                    placeholder = {
+                        Text("Select time")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+
+                        disabledTextColor =
+                            Color.White,
+
+                        disabledLabelColor =
+                            Color(0xFFB7D52B),
+
+                        disabledPlaceholderColor =
+                            Color(0xFF9AA3A3),
+
+                        disabledBorderColor =
+                            Color(0xFF777777)
+                    )
                 )
-            )
+            }
 
 
-            /* AREA */
+            /* =================================================
+               CHECK AREA
+               ================================================= */
 
             HygieneField(
                 value = area,
                 label = "Check Area",
-                placeholder = "e.g. Kitchen, Storage, Bar",
+                placeholder =
+                    "e.g. Kitchen, Storage, Bar",
                 onValueChange = {
 
                     area = it
@@ -516,12 +601,15 @@ fun HygieneChecks(
             )
 
 
-            /* ITEM */
+            /* =================================================
+               HYGIENE ITEM
+               ================================================= */
 
             HygieneField(
                 value = hygieneItem,
                 label = "Hygiene Item",
-                placeholder = "e.g. Hand washing station",
+                placeholder =
+                    "e.g. Hand washing station",
                 onValueChange = {
 
                     hygieneItem = it
@@ -530,10 +618,14 @@ fun HygieneChecks(
             )
 
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
 
 
-            /* STATUS */
+            /* =================================================
+               STATUS
+               ================================================= */
 
             Text(
                 text = "Status",
@@ -542,11 +634,14 @@ fun HygieneChecks(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement =
+                    Arrangement.spacedBy(10.dp)
             ) {
 
                 Button(
@@ -557,6 +652,7 @@ fun HygieneChecks(
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
+
                         containerColor =
                             if (status == "Pass")
                                 Color(0xFF6E8F18)
@@ -565,7 +661,11 @@ fun HygieneChecks(
                     )
                 ) {
 
-                    Text("PASS")
+                    Text(
+                        text = "PASS",
+                        fontWeight =
+                            FontWeight.Bold
+                    )
                 }
 
 
@@ -577,6 +677,7 @@ fun HygieneChecks(
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
+
                         containerColor =
                             if (status == "Fail")
                                 Color(0xFF9E4545)
@@ -585,20 +686,29 @@ fun HygieneChecks(
                     )
                 ) {
 
-                    Text("FAIL")
+                    Text(
+                        text = "FAIL",
+                        fontWeight =
+                            FontWeight.Bold
+                    )
                 }
             }
 
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
 
 
-            /* STAFF */
+            /* =================================================
+               STAFF
+               ================================================= */
 
             HygieneField(
                 value = staff,
                 label = "Staff Member",
-                placeholder = "Enter staff name",
+                placeholder =
+                    "Enter staff name",
                 onValueChange = {
 
                     staff = it
@@ -607,7 +717,9 @@ fun HygieneChecks(
             )
 
 
-            /* NOTES */
+            /* =================================================
+               NOTES
+               ================================================= */
 
             OutlinedTextField(
                 value = notes,
@@ -625,20 +737,35 @@ fun HygieneChecks(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(130.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = white,
-                    unfocusedTextColor = white,
-                    focusedLabelColor = green,
-                    unfocusedLabelColor = grey,
-                    cursorColor = green
-                )
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+
+                        focusedTextColor =
+                            Color.White,
+
+                        unfocusedTextColor =
+                            Color.White,
+
+                        focusedLabelColor =
+                            green,
+
+                        unfocusedLabelColor =
+                            grey,
+
+                        cursorColor =
+                            green
+                    )
             )
 
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
 
 
-            /* SAVE */
+            /* =================================================
+               SAVE BUTTON
+               ================================================= */
 
             Button(
                 onClick = {
@@ -682,23 +809,29 @@ fun HygieneChecks(
 
             if (saved) {
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(
+                    modifier = Modifier.height(14.dp)
+                )
 
                 Text(
-                    text = "Hygiene check saved successfully.",
+                    text =
+                        "Hygiene check saved successfully.",
                     color = green,
-                    fontWeight = FontWeight.Bold
+                    fontWeight =
+                        FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(
+                modifier = Modifier.height(30.dp)
+            )
         }
     }
 }
 
 
 /* =========================================================
-   HYGIENE FIELD
+   HYGIENE TEXT FIELD
    ========================================================= */
 
 @Composable
@@ -712,22 +845,37 @@ fun HygieneField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
+
         label = {
             Text(label)
         },
+
         placeholder = {
             Text(placeholder)
         },
+
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 14.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            focusedLabelColor = Color(0xFFB7D52B),
-            unfocusedLabelColor = Color(0xFF9AA3A3),
-            cursorColor = Color(0xFFB7D52B)
-        )
+
+        colors =
+            OutlinedTextFieldDefaults.colors(
+
+                focusedTextColor =
+                    Color.White,
+
+                unfocusedTextColor =
+                    Color.White,
+
+                focusedLabelColor =
+                    Color(0xFFB7D52B),
+
+                unfocusedLabelColor =
+                    Color(0xFF9AA3A3),
+
+                cursorColor =
+                    Color(0xFFB7D52B)
+            )
     )
 }
 
@@ -765,13 +913,40 @@ fun saveHygieneRecord(
     val record =
         JSONObject()
 
-    record.put("date", date)
-    record.put("time", time)
-    record.put("area", area)
-    record.put("item", item)
-    record.put("status", status)
-    record.put("staff", staff)
-    record.put("notes", notes)
+    record.put(
+        "date",
+        date
+    )
+
+    record.put(
+        "time",
+        time
+    )
+
+    record.put(
+        "area",
+        area
+    )
+
+    record.put(
+        "item",
+        item
+    )
+
+    record.put(
+        "status",
+        status
+    )
+
+    record.put(
+        "staff",
+        staff
+    )
+
+    record.put(
+        "notes",
+        notes
+    )
 
     records.put(record)
 
@@ -785,7 +960,7 @@ fun saveHygieneRecord(
 
 
 /* =========================================================
-   DASHBOARD COMPONENTS
+   STATUS CARD
    ========================================================= */
 
 @Composable
@@ -815,7 +990,9 @@ fun StatusCard(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
 
             Text(
                 text = title,
@@ -826,6 +1003,10 @@ fun StatusCard(
     }
 }
 
+
+/* =========================================================
+   SECTION TITLE
+   ========================================================= */
 
 @Composable
 fun SectionTitle(
@@ -838,10 +1019,16 @@ fun SectionTitle(
         color = color,
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 8.dp)
+        modifier = Modifier.padding(
+            bottom = 8.dp
+        )
     )
 }
 
+
+/* =========================================================
+   DASHBOARD ACTION CARD
+   ========================================================= */
 
 @Composable
 fun DashboardActionCard(
@@ -858,25 +1045,34 @@ fun DashboardActionCard(
             .fillMaxWidth()
             .padding(vertical = 5.dp)
             .then(
+
                 if (onClick != null) {
+
                     Modifier.clickable {
                         onClick()
                     }
+
                 } else {
+
                     Modifier
                 }
             ),
+
         shape = RoundedCornerShape(15.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = cardColor
-        )
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor = cardColor
+            )
     ) {
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(17.dp),
-            verticalAlignment = Alignment.CenterVertically
+
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
 
             Column(
@@ -887,10 +1083,13 @@ fun DashboardActionCard(
                     text = title,
                     color = titleColor,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight =
+                        FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(
+                    modifier = Modifier.height(4.dp)
+                )
 
                 Text(
                     text = subtitle,
@@ -927,8 +1126,12 @@ fun BottomNavigation(
             .background(background)
             .navigationBarsPadding()
             .padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+
+        horizontalArrangement =
+            Arrangement.SpaceEvenly,
+
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
 
         BottomItem(
@@ -960,6 +1163,10 @@ fun BottomNavigation(
 }
 
 
+/* =========================================================
+   BOTTOM NAV ITEM
+   ========================================================= */
+
 @Composable
 fun BottomItem(
     title: String,
@@ -972,6 +1179,7 @@ fun BottomItem(
         color = color,
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
+
         modifier = Modifier
             .padding(horizontal = 8.dp)
             .clickable {
@@ -1066,6 +1274,7 @@ fun RestaurantSettings(
                     rememberScrollState()
                 )
                 .imePadding()
+                .navigationBarsPadding()
                 .padding(20.dp)
         ) {
 
@@ -1075,11 +1284,14 @@ fun RestaurantSettings(
 
                 Text(
                     text = "← Back",
-                    color = Color(0xFFB7D52B)
+                    color = Color(0xFFB7D52B),
+                    fontSize = 16.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
 
             Text(
                 text = "Restaurant Settings",
@@ -1088,115 +1300,123 @@ fun RestaurantSettings(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
 
             SettingField(
                 value = restaurantName,
                 label = "Restaurant Name",
                 onValueChange = {
-
                     restaurantName = it
                     saved = false
                 }
             )
 
-
             SettingField(
                 value = address,
                 label = "Address",
                 onValueChange = {
-
                     address = it
                     saved = false
                 }
             )
 
-
             SettingField(
                 value = phone,
                 label = "Phone",
                 onValueChange = {
-
                     phone = it
                     saved = false
                 }
             )
 
-
             SettingField(
                 value = email,
                 label = "Email",
                 onValueChange = {
-
                     email = it
                     saved = false
                 }
             )
 
-
             SettingField(
                 value = manager,
                 label = "Manager / Owner",
                 onValueChange = {
-
                     manager = it
                     saved = false
                 }
             )
 
-
-            Spacer(modifier = Modifier.height(20.dp))
-
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
 
             Button(
                 onClick = {
 
                     preferences.edit()
+
                         .putString(
                             "restaurantName",
                             restaurantName
                         )
+
                         .putString(
                             "address",
                             address
                         )
+
                         .putString(
                             "phone",
                             phone
                         )
+
                         .putString(
                             "email",
                             email
                         )
+
                         .putString(
                             "manager",
                             manager
                         )
+
                         .apply()
 
                     saved = true
                 },
-                modifier = Modifier.fillMaxWidth()
+
+                modifier =
+                    Modifier.fillMaxWidth()
             ) {
 
                 Text(
-                    "Save Restaurant Information"
+                    text =
+                        "Save Restaurant Information"
                 )
             }
-
 
             if (saved) {
 
                 Spacer(
-                    modifier = Modifier.height(12.dp)
+                    modifier =
+                        Modifier.height(12.dp)
                 )
 
                 Text(
-                    text = "Information saved successfully.",
-                    color = Color(0xFFB7D52B)
+                    text =
+                        "Information saved successfully.",
+                    color =
+                        Color(0xFFB7D52B)
                 )
             }
+
+            Spacer(
+                modifier =
+                    Modifier.height(30.dp)
+            )
         }
     }
 }
@@ -1216,18 +1436,32 @@ fun SettingField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
+
         label = {
             Text(label)
         },
+
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 14.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            focusedLabelColor = Color(0xFFB7D52B),
-            unfocusedLabelColor = Color(0xFF9AA3A3),
-            cursorColor = Color(0xFFB7D52B)
-        )
+
+        colors =
+            OutlinedTextFieldDefaults.colors(
+
+                focusedTextColor =
+                    Color.White,
+
+                unfocusedTextColor =
+                    Color.White,
+
+                focusedLabelColor =
+                    Color(0xFFB7D52B),
+
+                unfocusedLabelColor =
+                    Color(0xFF9AA3A3),
+
+                cursorColor =
+                    Color(0xFFB7D52B)
+            )
     )
 }
