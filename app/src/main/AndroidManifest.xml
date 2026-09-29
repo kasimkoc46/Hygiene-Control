@@ -3,7 +3,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="Hygiene Control"
+        android:label="Gastro Guard"
         android:supportsRtl="true"
         android:theme="@style/Theme.HygieneControl">
 
