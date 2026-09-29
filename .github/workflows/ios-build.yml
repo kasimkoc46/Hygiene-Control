@@ -1,0 +1,66 @@
+name: iOS Build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "iOS/**"
+      - ".github/workflows/ios-build.yml"
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Create Xcode project
+        working-directory: iOS/GastroGuard
+        run: |
+          cat > project.yml <<'EOF'
+          name: GastroGuard
+
+          options:
+            bundleIdPrefix: com.hygienecontrol
+
+          settings:
+            base:
+              SWIFT_VERSION: 5.0
+              IPHONEOS_DEPLOYMENT_TARGET: 16.0
+
+          targets:
+            GastroGuard:
+              type: application
+              platform: iOS
+              deploymentTarget: "16.0"
+
+              sources:
+                - GastroGuardApp.swift
+                - ContentView.swift
+
+              settings:
+                base:
+                  PRODUCT_BUNDLE_IDENTIFIER: com.hygienecontrol.gastroguard
+                  INFOPLIST_KEY_CFBundleDisplayName: Gastro Guard
+                  INFOPLIST_KEY_LSRequiresIPhoneOS: YES
+                  GENERATE_INFOPLIST_FILE: YES
+
+          EOF
+
+          xcodegen generate
+
+      - name: Build iOS Simulator
+        working-directory: iOS/GastroGuard
+        run: |
+          xcodebuild \
+            -project GastroGuard.xcodeproj \
+            -scheme GastroGuard \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
