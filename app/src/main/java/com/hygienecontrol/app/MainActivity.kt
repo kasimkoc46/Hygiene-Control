@@ -8,34 +8,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -60,7 +40,7 @@ class MainActivity : ComponentActivity() {
 
 
 /* =========================================================
-   MAIN APP
+   APP NAVIGATION
    ========================================================= */
 
 @Composable
@@ -72,9 +52,34 @@ fun HygieneControlApp(context: Context) {
 
     when (currentScreen) {
 
+        "home" -> {
+
+            ProfessionalDashboard(
+                onHygieneClick = {
+                    currentScreen = "hygiene"
+                },
+                onRecordsClick = {
+                    currentScreen = "records"
+                },
+                onSettingsClick = {
+                    currentScreen = "settings"
+                }
+            )
+        }
+
         "hygiene" -> {
 
             HygieneChecks(
+                context = context,
+                onBack = {
+                    currentScreen = "home"
+                }
+            )
+        }
+
+        "records" -> {
+
+            RecordsScreen(
                 context = context,
                 onBack = {
                     currentScreen = "home"
@@ -91,41 +96,35 @@ fun HygieneControlApp(context: Context) {
                 }
             )
         }
-
-        else -> {
-
-            ProfessionalDashboard(
-                onHygieneClick = {
-                    currentScreen = "hygiene"
-                },
-                onSettingsClick = {
-                    currentScreen = "settings"
-                }
-            )
-        }
     }
 }
 
 
 /* =========================================================
-   PROFESSIONAL DASHBOARD
+   COLORS
+   ========================================================= */
+
+val AppBackground = Color(0xFF101414)
+val AppCard = Color(0xFF1A2020)
+val AppGreen = Color(0xFFB7D52B)
+val AppWhite = Color(0xFFF5F5F5)
+val AppGrey = Color(0xFF9AA3A3)
+
+
+/* =========================================================
+   DASHBOARD
    ========================================================= */
 
 @Composable
 fun ProfessionalDashboard(
     onHygieneClick: () -> Unit,
+    onRecordsClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
 
-    val background = Color(0xFF101414)
-    val cardColor = Color(0xFF1A2020)
-    val green = Color(0xFFB7D52B)
-    val white = Color(0xFFF5F5F5)
-    val grey = Color(0xFF9AA3A3)
-
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = background
+        color = AppBackground
     ) {
 
         Column(
@@ -141,35 +140,27 @@ fun ProfessionalDashboard(
 
                 Text(
                     text = "HYGIENE CONTROL",
-                    color = green,
+                    color = AppGreen,
                     fontSize = 27.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(
-                    modifier = Modifier.height(4.dp)
-                )
-
                 Text(
                     text = "Restaurant Food Safety Management",
-                    color = grey,
+                    color = AppGrey,
                     fontSize = 14.sp
                 )
 
-                Spacer(
-                    modifier = Modifier.height(24.dp)
-                )
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
                     text = "Today's Overview",
-                    color = white,
+                    color = AppWhite,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(
-                    modifier = Modifier.height(12.dp)
-                )
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -180,7 +171,7 @@ fun ProfessionalDashboard(
                         modifier = Modifier.weight(1f),
                         number = "0",
                         title = "Completed",
-                        color = green
+                        color = AppGreen
                     )
 
                     StatusCard(
@@ -198,101 +189,70 @@ fun ProfessionalDashboard(
                     )
                 }
 
-                Spacer(
-                    modifier = Modifier.height(26.dp)
-                )
+                Spacer(modifier = Modifier.height(26.dp))
 
                 SectionTitle(
                     title = "Daily Checks",
-                    color = green
+                    color = AppGreen
                 )
 
                 DashboardActionCard(
                     title = "Hygiene Checks",
                     subtitle = "Daily food safety and hygiene controls",
-                    cardColor = cardColor,
-                    titleColor = white,
-                    subtitleColor = grey,
                     onClick = onHygieneClick
                 )
 
                 DashboardActionCard(
                     title = "Temperature Checks",
-                    subtitle = "Fridge, freezer and food temperatures",
-                    cardColor = cardColor,
-                    titleColor = white,
-                    subtitleColor = grey
+                    subtitle = "Fridge, freezer and food temperatures"
                 )
 
                 DashboardActionCard(
                     title = "Cleaning Checks",
-                    subtitle = "Cleaning tasks and completion records",
-                    cardColor = cardColor,
-                    titleColor = white,
-                    subtitleColor = grey
+                    subtitle = "Cleaning tasks and completion records"
                 )
 
-                Spacer(
-                    modifier = Modifier.height(22.dp)
-                )
+                Spacer(modifier = Modifier.height(22.dp))
 
                 SectionTitle(
                     title = "Compliance",
-                    color = green
+                    color = AppGreen
                 )
 
                 DashboardActionCard(
                     title = "Inspection Records",
                     subtitle = "View and manage inspection history",
-                    cardColor = cardColor,
-                    titleColor = white,
-                    subtitleColor = grey
+                    onClick = onRecordsClick
                 )
 
                 DashboardActionCard(
                     title = "Corrective Actions",
-                    subtitle = "Record problems and corrective measures",
-                    cardColor = cardColor,
-                    titleColor = white,
-                    subtitleColor = grey
+                    subtitle = "Record problems and corrective measures"
                 )
 
                 DashboardActionCard(
                     title = "Staff Checks",
-                    subtitle = "Staff hygiene and training records",
-                    cardColor = cardColor,
-                    titleColor = white,
-                    subtitleColor = grey
+                    subtitle = "Staff hygiene and training records"
                 )
 
-                Spacer(
-                    modifier = Modifier.height(22.dp)
-                )
+                Spacer(modifier = Modifier.height(22.dp))
 
                 SectionTitle(
                     title = "Reports",
-                    color = green
+                    color = AppGreen
                 )
 
                 DashboardActionCard(
                     title = "Inspection Report",
-                    subtitle = "Prepare a complete inspection report",
-                    cardColor = cardColor,
-                    titleColor = white,
-                    subtitleColor = grey
+                    subtitle = "Prepare a complete inspection report"
                 )
 
                 DashboardActionCard(
                     title = "PDF Reports",
-                    subtitle = "Generate and export professional reports",
-                    cardColor = cardColor,
-                    titleColor = white,
-                    subtitleColor = grey
+                    subtitle = "Generate and export professional reports"
                 )
 
-                Spacer(
-                    modifier = Modifier.height(22.dp)
-                )
+                Spacer(modifier = Modifier.height(22.dp))
 
                 Card(
                     modifier = Modifier
@@ -300,7 +260,7 @@ fun ProfessionalDashboard(
                         .clickable {
                             onSettingsClick()
                         },
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(15.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = Color(0xFF202727)
                     )
@@ -309,7 +269,7 @@ fun ProfessionalDashboard(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(18.dp),
+                            .padding(17.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
@@ -319,39 +279,31 @@ fun ProfessionalDashboard(
 
                             Text(
                                 text = "Restaurant Settings",
-                                color = white,
-                                fontSize = 17.sp,
+                                color = AppWhite,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
 
-                            Spacer(
-                                modifier = Modifier.height(4.dp)
-                            )
+                            Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
                                 text = "Restaurant information",
-                                color = grey,
-                                fontSize = 13.sp
+                                color = AppGrey,
+                                fontSize = 12.sp
                             )
                         }
 
                         Text(
                             text = "›",
-                            color = green,
-                            fontSize = 30.sp
+                            color = AppGreen,
+                            fontSize = 28.sp
                         )
                     }
                 }
-
-                Spacer(
-                    modifier = Modifier.height(20.dp)
-                )
             }
 
             BottomNavigation(
-                background = Color(0xFF151A1A),
-                green = green,
-                grey = grey,
+                onRecordsClick = onRecordsClick,
                 onSettingsClick = onSettingsClick
             )
         }
@@ -360,7 +312,7 @@ fun ProfessionalDashboard(
 
 
 /* =========================================================
-   HYGIENE CHECK SCREEN
+   HYGIENE CHECK
    ========================================================= */
 
 @Composable
@@ -369,95 +321,57 @@ fun HygieneChecks(
     onBack: () -> Unit
 ) {
 
-    var recordDate by remember {
-        mutableStateOf("")
-    }
-
-    var time by remember {
-        mutableStateOf("")
-    }
-
-    var area by remember {
-        mutableStateOf("")
-    }
-
-    var hygieneItem by remember {
-        mutableStateOf("")
-    }
-
-    var staff by remember {
-        mutableStateOf("")
-    }
-
-    var notes by remember {
-        mutableStateOf("")
-    }
-
-    var status by remember {
-        mutableStateOf("Pass")
-    }
-
-    var saved by remember {
-        mutableStateOf(false)
-    }
-
-    val background = Color(0xFF101414)
-    val white = Color.White
-    val grey = Color(0xFF9AA3A3)
-    val green = Color(0xFFB7D52B)
+    var recordDate by remember { mutableStateOf("") }
+    var time by remember { mutableStateOf("") }
+    var area by remember { mutableStateOf("") }
+    var hygieneItem by remember { mutableStateOf("") }
+    var staff by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf("Pass") }
+    var saved by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = background
+        color = AppBackground
     ) {
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(
-                    rememberScrollState()
-                )
+                .verticalScroll(rememberScrollState())
                 .imePadding()
                 .navigationBarsPadding()
                 .padding(20.dp)
         ) {
 
-            TextButton(
-                onClick = onBack
-            ) {
+            TextButton(onClick = onBack) {
 
                 Text(
                     text = "← Back",
-                    color = green,
+                    color = AppGreen,
                     fontSize = 16.sp
                 )
             }
 
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Hygiene Check",
-                color = white,
+                color = AppWhite,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
                 text = "Record a food safety and hygiene check",
-                color = grey,
+                color = AppGrey,
                 fontSize = 14.sp
             )
 
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
+            Spacer(modifier = Modifier.height(24.dp))
 
 
-            /* =================================================
-               DATE PICKER
-               ================================================= */
+            /* DATE */
 
             Box(
                 modifier = Modifier
@@ -465,8 +379,7 @@ fun HygieneChecks(
                     .padding(bottom = 14.dp)
                     .clickable {
 
-                        val calendar =
-                            Calendar.getInstance()
+                        val calendar = Calendar.getInstance()
 
                         DatePickerDialog(
                             context,
@@ -501,26 +414,16 @@ fun HygieneChecks(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-
-                        disabledTextColor =
-                            Color.White,
-
-                        disabledLabelColor =
-                            Color(0xFFB7D52B),
-
-                        disabledPlaceholderColor =
-                            Color(0xFF9AA3A3),
-
-                        disabledBorderColor =
-                            Color(0xFF777777)
+                        disabledTextColor = Color.White,
+                        disabledLabelColor = AppGreen,
+                        disabledPlaceholderColor = AppGrey,
+                        disabledBorderColor = Color(0xFF777777)
                     )
                 )
             }
 
 
-            /* =================================================
-               TIME PICKER
-               ================================================= */
+            /* TIME */
 
             Box(
                 modifier = Modifier
@@ -528,8 +431,7 @@ fun HygieneChecks(
                     .padding(bottom = 14.dp)
                     .clickable {
 
-                        val calendar =
-                            Calendar.getInstance()
+                        val calendar = Calendar.getInstance()
 
                         TimePickerDialog(
                             context,
@@ -543,12 +445,8 @@ fun HygieneChecks(
 
                                 saved = false
                             },
-                            calendar.get(
-                                Calendar.HOUR_OF_DAY
-                            ),
-                            calendar.get(
-                                Calendar.MINUTE
-                            ),
+                            calendar.get(Calendar.HOUR_OF_DAY),
+                            calendar.get(Calendar.MINUTE),
                             true
                         ).show()
                     }
@@ -567,92 +465,58 @@ fun HygieneChecks(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-
-                        disabledTextColor =
-                            Color.White,
-
-                        disabledLabelColor =
-                            Color(0xFFB7D52B),
-
-                        disabledPlaceholderColor =
-                            Color(0xFF9AA3A3),
-
-                        disabledBorderColor =
-                            Color(0xFF777777)
+                        disabledTextColor = Color.White,
+                        disabledLabelColor = AppGreen,
+                        disabledPlaceholderColor = AppGrey,
+                        disabledBorderColor = Color(0xFF777777)
                     )
                 )
             }
 
 
-            /* =================================================
-               CHECK AREA
-               ================================================= */
-
             HygieneField(
                 value = area,
                 label = "Check Area",
-                placeholder =
-                    "e.g. Kitchen, Storage, Bar",
+                placeholder = "e.g. Kitchen, Storage, Bar",
                 onValueChange = {
-
                     area = it
                     saved = false
                 }
             )
 
-
-            /* =================================================
-               HYGIENE ITEM
-               ================================================= */
-
             HygieneField(
                 value = hygieneItem,
                 label = "Hygiene Item",
-                placeholder =
-                    "e.g. Hand washing station",
+                placeholder = "e.g. Hand washing station",
                 onValueChange = {
-
                     hygieneItem = it
                     saved = false
                 }
             )
 
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-
-            /* =================================================
-               STATUS
-               ================================================= */
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Status",
-                color = white,
+                color = AppWhite,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement =
-                    Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
 
                 Button(
                     onClick = {
-
                         status = "Pass"
                         saved = false
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-
                         containerColor =
                             if (status == "Pass")
                                 Color(0xFF6E8F18)
@@ -661,23 +525,16 @@ fun HygieneChecks(
                     )
                 ) {
 
-                    Text(
-                        text = "PASS",
-                        fontWeight =
-                            FontWeight.Bold
-                    )
+                    Text("PASS")
                 }
-
 
                 Button(
                     onClick = {
-
                         status = "Fail"
                         saved = false
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-
                         containerColor =
                             if (status == "Fail")
                                 Color(0xFF9E4545)
@@ -686,45 +543,25 @@ fun HygieneChecks(
                     )
                 ) {
 
-                    Text(
-                        text = "FAIL",
-                        fontWeight =
-                            FontWeight.Bold
-                    )
+                    Text("FAIL")
                 }
             }
 
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
-            /* =================================================
-               STAFF
-               ================================================= */
+            Spacer(modifier = Modifier.height(16.dp))
 
             HygieneField(
                 value = staff,
                 label = "Staff Member",
-                placeholder =
-                    "Enter staff name",
+                placeholder = "Enter staff name",
                 onValueChange = {
-
                     staff = it
                     saved = false
                 }
             )
 
-
-            /* =================================================
-               NOTES
-               ================================================= */
-
             OutlinedTextField(
                 value = notes,
                 onValueChange = {
-
                     notes = it
                     saved = false
                 },
@@ -737,35 +574,16 @@ fun HygieneChecks(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(130.dp),
-                colors =
-                    OutlinedTextFieldDefaults.colors(
-
-                        focusedTextColor =
-                            Color.White,
-
-                        unfocusedTextColor =
-                            Color.White,
-
-                        focusedLabelColor =
-                            green,
-
-                        unfocusedLabelColor =
-                            grey,
-
-                        cursorColor =
-                            green
-                    )
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedLabelColor = AppGreen,
+                    unfocusedLabelColor = AppGrey,
+                    cursorColor = AppGreen
+                )
             )
 
-
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
-
-
-            /* =================================================
-               SAVE BUTTON
-               ================================================= */
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
@@ -791,11 +609,9 @@ fun HygieneChecks(
                     notes = ""
                     status = "Pass"
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding(),
+                modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = green,
+                    containerColor = AppGreen,
                     contentColor = Color.Black
                 )
             ) {
@@ -806,24 +622,347 @@ fun HygieneChecks(
                 )
             }
 
-
             if (saved) {
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Hygiene check saved successfully.",
+                    color = AppGreen,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(30.dp))
+        }
+    }
+}
+
+
+/* =========================================================
+   RECORDS SCREEN
+   ========================================================= */
+
+@Composable
+fun RecordsScreen(
+    context: Context,
+    onBack: () -> Unit
+) {
+
+    var records by remember {
+        mutableStateOf(
+            loadHygieneRecords(context)
+        )
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = AppBackground
+    ) {
+
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 12.dp,
+                        end = 20.dp,
+                        top = 12.dp,
+                        bottom = 8.dp
+                    ),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                TextButton(
+                    onClick = onBack
+                ) {
+
+                    Text(
+                        text = "← Back",
+                        color = AppGreen,
+                        fontSize = 16.sp
+                    )
+                }
+
                 Spacer(
-                    modifier = Modifier.height(14.dp)
+                    modifier = Modifier.weight(1f)
                 )
 
                 Text(
-                    text =
-                        "Hygiene check saved successfully.",
-                    color = green,
-                    fontWeight =
-                        FontWeight.Bold
+                    text = "${records.size} Records",
+                    color = AppGrey,
+                    fontSize = 13.sp
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 20.dp)
+            ) {
+
+                Text(
+                    text = "Inspection Records",
+                    color = AppWhite,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "Hygiene check history",
+                    color = AppGrey,
+                    fontSize = 14.sp
+                )
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+
+                if (records.isEmpty()) {
+
+                    EmptyRecords()
+
+                } else {
+
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement =
+                            Arrangement.spacedBy(12.dp),
+                        contentPadding =
+                            PaddingValues(bottom = 30.dp)
+                    ) {
+
+                        itemsIndexed(
+                            records
+                        ) { index, record ->
+
+                            RecordCard(
+                                record = record,
+                                onDelete = {
+
+                                    deleteHygieneRecord(
+                                        context,
+                                        index
+                                    )
+
+                                    records =
+                                        loadHygieneRecords(
+                                            context
+                                        )
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+/* =========================================================
+   EMPTY RECORDS
+   ========================================================= */
+
+@Composable
+fun EmptyRecords() {
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 80.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Text(
+            text = "No records yet",
+            color = AppWhite,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(
+            modifier = Modifier.height(8.dp)
+        )
+
+        Text(
+            text = "Saved hygiene checks will appear here.",
+            color = AppGrey,
+            fontSize = 14.sp
+        )
+    }
+}
+
+
+/* =========================================================
+   RECORD CARD
+   ========================================================= */
+
+@Composable
+fun RecordCard(
+    record: HygieneRecord,
+    onDelete: () -> Unit
+) {
+
+    val statusColor =
+        if (record.status == "Pass")
+            AppGreen
+        else
+            Color(0xFFE57373)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = AppCard
+        )
+    ) {
+
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        text =
+                            if (record.item.isNotBlank())
+                                record.item
+                            else
+                                "Hygiene Check",
+                        color = AppWhite,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(5.dp)
+                    )
+
+                    Text(
+                        text =
+                            "${record.date}  •  ${record.time}",
+                        color = AppGrey,
+                        fontSize = 13.sp
+                    )
+                }
+
+                Surface(
+                    shape =
+                        RoundedCornerShape(8.dp),
+                    color = statusColor
+                ) {
+
+                    Text(
+                        text =
+                            record.status.uppercase(),
+                        color =
+                            if (record.status == "Pass")
+                                Color.Black
+                            else
+                                Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 10.dp,
+                                vertical = 6.dp
+                            )
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            RecordLine(
+                title = "Check Area",
+                value = record.area
+            )
+
+            RecordLine(
+                title = "Staff Member",
+                value = record.staff
+            )
+
+            if (record.notes.isNotBlank()) {
+
+                Spacer(
+                    modifier = Modifier.height(6.dp)
+                )
+
+                Text(
+                    text = "Notes",
+                    color = AppGrey,
+                    fontSize = 12.sp
+                )
+
+                Text(
+                    text = record.notes,
+                    color = AppWhite,
+                    fontSize = 14.sp
                 )
             }
 
             Spacer(
-                modifier = Modifier.height(30.dp)
+                modifier = Modifier.height(8.dp)
+            )
+
+            TextButton(
+                onClick = onDelete
+            ) {
+
+                Text(
+                    text = "Delete record",
+                    color = Color(0xFFE57373),
+                    fontSize = 12.sp
+                )
+            }
+        }
+    }
+}
+
+
+/* =========================================================
+   RECORD LINE
+   ========================================================= */
+
+@Composable
+fun RecordLine(
+    title: String,
+    value: String
+) {
+
+    if (value.isNotBlank()) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 3.dp)
+        ) {
+
+            Text(
+                text = "$title: ",
+                color = AppGrey,
+                fontSize = 13.sp
+            )
+
+            Text(
+                text = value,
+                color = AppWhite,
+                fontSize = 13.sp
             )
         }
     }
@@ -831,7 +970,181 @@ fun HygieneChecks(
 
 
 /* =========================================================
-   HYGIENE TEXT FIELD
+   DATA MODEL
+   ========================================================= */
+
+data class HygieneRecord(
+    val date: String,
+    val time: String,
+    val area: String,
+    val item: String,
+    val status: String,
+    val staff: String,
+    val notes: String
+)
+
+
+/* =========================================================
+   SAVE RECORD
+   ========================================================= */
+
+fun saveHygieneRecord(
+    context: Context,
+    date: String,
+    time: String,
+    area: String,
+    item: String,
+    status: String,
+    staff: String,
+    notes: String
+) {
+
+    val preferences =
+        context.getSharedPreferences(
+            "hygiene_records",
+            Context.MODE_PRIVATE
+        )
+
+    val existing =
+        preferences.getString(
+            "records",
+            "[]"
+        ) ?: "[]"
+
+    val records =
+        JSONArray(existing)
+
+    val record =
+        JSONObject()
+
+    record.put("date", date)
+    record.put("time", time)
+    record.put("area", area)
+    record.put("item", item)
+    record.put("status", status)
+    record.put("staff", staff)
+    record.put("notes", notes)
+
+    records.put(record)
+
+    preferences.edit()
+        .putString(
+            "records",
+            records.toString()
+        )
+        .apply()
+}
+
+
+/* =========================================================
+   LOAD RECORDS
+   ========================================================= */
+
+fun loadHygieneRecords(
+    context: Context
+): List<HygieneRecord> {
+
+    val preferences =
+        context.getSharedPreferences(
+            "hygiene_records",
+            Context.MODE_PRIVATE
+        )
+
+    val data =
+        preferences.getString(
+            "records",
+            "[]"
+        ) ?: "[]"
+
+    val jsonArray =
+        JSONArray(data)
+
+    val result =
+        mutableListOf<HygieneRecord>()
+
+    for (i in 0 until jsonArray.length()) {
+
+        val obj =
+            jsonArray.getJSONObject(i)
+
+        result.add(
+            HygieneRecord(
+                date =
+                    obj.optString("date"),
+                time =
+                    obj.optString("time"),
+                area =
+                    obj.optString("area"),
+                item =
+                    obj.optString("item"),
+                status =
+                    obj.optString(
+                        "status",
+                        "Pass"
+                    ),
+                staff =
+                    obj.optString("staff"),
+                notes =
+                    obj.optString("notes")
+            )
+        )
+    }
+
+    return result.reversed()
+}
+
+
+/* =========================================================
+   DELETE RECORD
+   ========================================================= */
+
+fun deleteHygieneRecord(
+    context: Context,
+    index: Int
+) {
+
+    val preferences =
+        context.getSharedPreferences(
+            "hygiene_records",
+            Context.MODE_PRIVATE
+        )
+
+    val data =
+        preferences.getString(
+            "records",
+            "[]"
+        ) ?: "[]"
+
+    val oldArray =
+        JSONArray(data)
+
+    val newArray =
+        JSONArray()
+
+    val reversedIndex =
+        oldArray.length() - 1 - index
+
+    for (i in 0 until oldArray.length()) {
+
+        if (i != reversedIndex) {
+
+            newArray.put(
+                oldArray.getJSONObject(i)
+            )
+        }
+    }
+
+    preferences.edit()
+        .putString(
+            "records",
+            newArray.toString()
+        )
+        .apply()
+}
+
+
+/* =========================================================
+   HYGIENE FIELD
    ========================================================= */
 
 @Composable
@@ -868,94 +1181,15 @@ fun HygieneField(
                     Color.White,
 
                 focusedLabelColor =
-                    Color(0xFFB7D52B),
+                    AppGreen,
 
                 unfocusedLabelColor =
-                    Color(0xFF9AA3A3),
+                    AppGrey,
 
                 cursorColor =
-                    Color(0xFFB7D52B)
+                    AppGreen
             )
     )
-}
-
-
-/* =========================================================
-   SAVE HYGIENE RECORD
-   ========================================================= */
-
-fun saveHygieneRecord(
-    context: Context,
-    date: String,
-    time: String,
-    area: String,
-    item: String,
-    status: String,
-    staff: String,
-    notes: String
-) {
-
-    val preferences =
-        context.getSharedPreferences(
-            "hygiene_records",
-            Context.MODE_PRIVATE
-        )
-
-    val existing =
-        preferences.getString(
-            "records",
-            "[]"
-        ) ?: "[]"
-
-    val records =
-        JSONArray(existing)
-
-    val record =
-        JSONObject()
-
-    record.put(
-        "date",
-        date
-    )
-
-    record.put(
-        "time",
-        time
-    )
-
-    record.put(
-        "area",
-        area
-    )
-
-    record.put(
-        "item",
-        item
-    )
-
-    record.put(
-        "status",
-        status
-    )
-
-    record.put(
-        "staff",
-        staff
-    )
-
-    record.put(
-        "notes",
-        notes
-    )
-
-    records.put(record)
-
-    preferences.edit()
-        .putString(
-            "records",
-            records.toString()
-        )
-        .apply()
 }
 
 
@@ -975,7 +1209,7 @@ fun StatusCard(
         modifier = modifier,
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1A2020)
+            containerColor = AppCard
         )
     ) {
 
@@ -996,7 +1230,7 @@ fun StatusCard(
 
             Text(
                 text = title,
-                color = Color(0xFF9AA3A3),
+                color = AppGrey,
                 fontSize = 11.sp
             )
         }
@@ -1027,16 +1261,13 @@ fun SectionTitle(
 
 
 /* =========================================================
-   DASHBOARD ACTION CARD
+   DASHBOARD CARD
    ========================================================= */
 
 @Composable
 fun DashboardActionCard(
     title: String,
     subtitle: String,
-    cardColor: Color,
-    titleColor: Color,
-    subtitleColor: Color,
     onClick: (() -> Unit)? = null
 ) {
 
@@ -1045,32 +1276,24 @@ fun DashboardActionCard(
             .fillMaxWidth()
             .padding(vertical = 5.dp)
             .then(
-
                 if (onClick != null) {
-
                     Modifier.clickable {
                         onClick()
                     }
-
                 } else {
-
                     Modifier
                 }
             ),
-
         shape = RoundedCornerShape(15.dp),
-
-        colors =
-            CardDefaults.cardColors(
-                containerColor = cardColor
-            )
+        colors = CardDefaults.cardColors(
+            containerColor = AppCard
+        )
     ) {
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(17.dp),
-
             verticalAlignment =
                 Alignment.CenterVertically
         ) {
@@ -1081,10 +1304,9 @@ fun DashboardActionCard(
 
                 Text(
                     text = title,
-                    color = titleColor,
+                    color = AppWhite,
                     fontSize = 16.sp,
-                    fontWeight =
-                        FontWeight.Bold
+                    fontWeight = FontWeight.Bold
                 )
 
                 Spacer(
@@ -1093,14 +1315,14 @@ fun DashboardActionCard(
 
                 Text(
                     text = subtitle,
-                    color = subtitleColor,
+                    color = AppGrey,
                     fontSize = 12.sp
                 )
             }
 
             Text(
                 text = "›",
-                color = Color(0xFFB7D52B),
+                color = AppGreen,
                 fontSize = 28.sp
             )
         }
@@ -1114,49 +1336,46 @@ fun DashboardActionCard(
 
 @Composable
 fun BottomNavigation(
-    background: Color,
-    green: Color,
-    grey: Color,
+    onRecordsClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(background)
+            .background(Color(0xFF151A1A))
             .navigationBarsPadding()
             .padding(vertical = 12.dp),
-
         horizontalArrangement =
             Arrangement.SpaceEvenly,
-
         verticalAlignment =
             Alignment.CenterVertically
     ) {
 
         BottomItem(
             title = "Home",
-            color = green
+            color = AppGreen
         )
 
         BottomItem(
             title = "Checks",
-            color = grey
+            color = AppGrey
         )
 
         BottomItem(
             title = "Records",
-            color = grey
+            color = AppGrey,
+            onClick = onRecordsClick
         )
 
         BottomItem(
             title = "Reports",
-            color = grey
+            color = AppGrey
         )
 
         BottomItem(
             title = "Settings",
-            color = grey,
+            color = AppGrey,
             onClick = onSettingsClick
         )
     }
@@ -1164,7 +1383,7 @@ fun BottomNavigation(
 
 
 /* =========================================================
-   BOTTOM NAV ITEM
+   BOTTOM ITEM
    ========================================================= */
 
 @Composable
@@ -1179,7 +1398,6 @@ fun BottomItem(
         color = color,
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
-
         modifier = Modifier
             .padding(horizontal = 8.dp)
             .clickable {
@@ -1264,7 +1482,7 @@ fun RestaurantSettings(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF101414)
+        color = AppBackground
     ) {
 
         Column(
@@ -1284,7 +1502,7 @@ fun RestaurantSettings(
 
                 Text(
                     text = "← Back",
-                    color = Color(0xFFB7D52B),
+                    color = AppGreen,
                     fontSize = 16.sp
                 )
             }
@@ -1357,39 +1575,31 @@ fun RestaurantSettings(
                 onClick = {
 
                     preferences.edit()
-
                         .putString(
                             "restaurantName",
                             restaurantName
                         )
-
                         .putString(
                             "address",
                             address
                         )
-
                         .putString(
                             "phone",
                             phone
                         )
-
                         .putString(
                             "email",
                             email
                         )
-
                         .putString(
                             "manager",
                             manager
                         )
-
                         .apply()
 
                     saved = true
                 },
-
-                modifier =
-                    Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             ) {
 
                 Text(
@@ -1409,7 +1619,7 @@ fun RestaurantSettings(
                     text =
                         "Information saved successfully.",
                     color =
-                        Color(0xFFB7D52B)
+                        AppGreen
                 )
             }
 
@@ -1455,13 +1665,13 @@ fun SettingField(
                     Color.White,
 
                 focusedLabelColor =
-                    Color(0xFFB7D52B),
+                    AppGreen,
 
                 unfocusedLabelColor =
-                    Color(0xFF9AA3A3),
+                    AppGrey,
 
                 cursorColor =
-                    Color(0xFFB7D52B)
+                    AppGreen
             )
     )
 }
