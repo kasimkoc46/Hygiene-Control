@@ -494,12 +494,16 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(25.dp))
 
-            Text(
-                text = "CanCleaning FoodSafe",
-                color = Gray,
-                fontSize = 12.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            Box(
+    modifier = Modifier.fillMaxWidth(),
+    contentAlignment = Alignment.Center
+) {
+    Text(
+        text = "CanCleaning FoodSafe",
+        color = Gray,
+        fontSize = 12.sp
+    )
+}
         }
     }
 }
