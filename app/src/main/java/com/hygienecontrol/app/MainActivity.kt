@@ -173,11 +173,9 @@ class MainActivity : ComponentActivity() {
                     }
 
                     AppScreen.TEMPERATURE -> {
-                        SimpleScreen(
-                            title = "Temperature Checks",
-                            subtitle = "Fridge, freezer and food temperatures",
-                            onBack = { navigateTo(AppScreen.HOME) }
-                        )
+                       TemperatureCheckScreen(
+                           onBack = { navigateTo(AppScreen.HOME) }
+                     )
                     }
 
                     AppScreen.CLEANING -> {
