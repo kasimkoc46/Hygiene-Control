@@ -1362,12 +1362,13 @@ fun SettingsScreen(
                     contentColor = Color.Black
                 ),
                 shape = RoundedCornerShape(28.dp)
-            ) {
-                Text(
-                    "Save Restaurant Information",
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                content = {
+        Text(
+            text = "Save Restaurant Information",
+            fontWeight = FontWeight.Bold
+        )
+    }
+)
 
             Spacer(Modifier.height(30.dp))
         }
