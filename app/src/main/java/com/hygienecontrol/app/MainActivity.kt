@@ -13,6 +13,7 @@ import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -30,10 +32,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
@@ -91,9 +95,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun HygieneControlApp() {
 
-    var screen by remember { mutableStateOf(AppScreen.HOME) }
+    var screen by remember {
+        mutableStateOf(AppScreen.HOME)
+    }
 
     BackHandler {
+
         if (screen == AppScreen.HOME) {
             return@BackHandler
         } else {
@@ -119,7 +126,9 @@ fun HygieneControlApp() {
             when (screen) {
 
                 AppScreen.HOME -> HomeScreen(
-                    onNavigate = { screen = it }
+                    onNavigate = {
+                        screen = it
+                    }
                 )
 
                 AppScreen.HYGIENE -> AuditFormScreen(
@@ -127,7 +136,9 @@ fun HygieneControlApp() {
                     type = "Hygiene",
                     icon = Icons.Default.HealthAndSafety,
                     iconColor = Green,
-                    onBack = { screen = AppScreen.HOME }
+                    onBack = {
+                        screen = AppScreen.HOME
+                    }
                 )
 
                 AppScreen.TEMPERATURE -> AuditFormScreen(
@@ -135,7 +146,9 @@ fun HygieneControlApp() {
                     type = "Temperature",
                     icon = Icons.Default.Thermostat,
                     iconColor = Blue,
-                    onBack = { screen = AppScreen.HOME }
+                    onBack = {
+                        screen = AppScreen.HOME
+                    }
                 )
 
                 AppScreen.CLEANING -> AuditFormScreen(
@@ -143,7 +156,9 @@ fun HygieneControlApp() {
                     type = "Cleaning",
                     icon = Icons.Default.CleaningServices,
                     iconColor = Purple,
-                    onBack = { screen = AppScreen.HOME }
+                    onBack = {
+                        screen = AppScreen.HOME
+                    }
                 )
 
                 AppScreen.STAFF -> AuditFormScreen(
@@ -151,23 +166,33 @@ fun HygieneControlApp() {
                     type = "Staff",
                     icon = Icons.Default.Groups,
                     iconColor = Yellow,
-                    onBack = { screen = AppScreen.HOME }
+                    onBack = {
+                        screen = AppScreen.HOME
+                    }
                 )
 
                 AppScreen.CORRECTIVE -> CorrectiveActionScreen(
-                    onBack = { screen = AppScreen.HOME }
+                    onBack = {
+                        screen = AppScreen.HOME
+                    }
                 )
 
                 AppScreen.RECORDS -> RecordsScreen(
-                    onBack = { screen = AppScreen.HOME }
+                    onBack = {
+                        screen = AppScreen.HOME
+                    }
                 )
 
                 AppScreen.REPORTS -> ReportsScreen(
-                    onBack = { screen = AppScreen.HOME }
+                    onBack = {
+                        screen = AppScreen.HOME
+                    }
                 )
 
                 AppScreen.SETTINGS -> SettingsScreen(
-                    onBack = { screen = AppScreen.HOME }
+                    onBack = {
+                        screen = AppScreen.HOME
+                    }
                 )
             }
         }
@@ -184,52 +209,21 @@ fun BrandHeader(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Icon(
-                imageVector = Icons.Default.Eco,
-                contentDescription = null,
-                tint = Lime,
-                modifier = Modifier.size(if (compact) 38.dp else 58.dp)
-            )
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            Column {
-
-                Row {
-
-                    Text(
-                        text = "Can",
-                        color = White,
-                        fontSize = if (compact) 25.sp else 34.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Text(
-                        text = "Cleaning",
-                        color = Lime,
-                        fontSize = if (compact) 25.sp else 34.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Text(
-                    text = "FoodSafe",
-                    color = Lime,
-                    fontSize = if (compact) 18.sp else 23.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.End)
-                )
-            }
-        }
-
-        Text(
-            text = "Food Safety & Hygiene Control",
-            color = Gray,
-            fontSize = if (compact) 12.sp else 14.sp
+        Image(
+            painter = painterResource(
+                id = R.drawable.gastro_guard_dashboard_logo
+            ),
+            contentDescription = "Gastro Guard",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(
+                    if (compact) {
+                        100.dp
+                    } else {
+                        155.dp
+                    }
+                ),
+            contentScale = ContentScale.Fit
         )
     }
 }
@@ -242,7 +236,9 @@ fun HomeScreen(
     val context = LocalContext.current
 
     var records by remember {
-        mutableStateOf(loadRecords(context))
+        mutableStateOf(
+            loadRecords(context)
+        )
     }
 
     val score = calculateScore(records)
@@ -257,14 +253,19 @@ fun HomeScreen(
     }
 
     val completed = todayRecords.count {
-        it.status == "PASS" || it.status == "CLOSED"
+        it.status == "PASS" ||
+                it.status == "CLOSED"
     }
 
     val issues = todayRecords.count {
-        it.status == "FAIL" || it.status == "OPEN"
+        it.status == "FAIL" ||
+                it.status == "OPEN"
     }
 
-    val pending = maxOf(0, 10 - todayRecords.size)
+    val pending = maxOf(
+        0,
+        10 - todayRecords.size
+    )
 
     LazyColumn(
         modifier = Modifier
@@ -282,11 +283,15 @@ fun HomeScreen(
 
             BrandHeader()
 
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(
+                modifier = Modifier.height(22.dp)
+            )
 
             ScoreCard(score)
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(
+                modifier = Modifier.height(18.dp)
+            )
 
             Text(
                 text = "Today's Overview",
@@ -295,7 +300,9 @@ fun HomeScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -327,7 +334,9 @@ fun HomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(
+                modifier = Modifier.height(22.dp)
+            )
 
             Text(
                 text = "Quick Actions",
@@ -336,10 +345,17 @@ fun HomeScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
         }
 
+        /*
+         * HYGIENE + CLEANING
+         */
+
         item {
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -347,55 +363,62 @@ fun HomeScreen(
 
                 MenuCard(
                     modifier = Modifier.weight(1f),
-                    title = "Hygiene\nChecks",
+                    title = "Hygiene Checks",
                     icon = Icons.Default.HealthAndSafety,
                     color = Green
                 ) {
-                    onNavigate(AppScreen.HYGIENE)
+                    onNavigate(
+                        AppScreen.HYGIENE
+                    )
                 }
 
                 MenuCard(
                     modifier = Modifier.weight(1f),
-                    title = "Temperature\nChecks",
-                    icon = Icons.Default.Thermostat,
-                    color = Blue
-                ) {
-                    onNavigate(AppScreen.TEMPERATURE)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-        }
-
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-
-                MenuCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Cleaning\nChecks",
+                    title = "Cleaning Checks",
                     icon = Icons.Default.CleaningServices,
                     color = Purple
                 ) {
-                    onNavigate(AppScreen.CLEANING)
-                }
-
-                MenuCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Corrective\nActions",
-                    icon = Icons.Default.WarningAmber,
-                    color = Orange
-                ) {
-                    onNavigate(AppScreen.CORRECTIVE)
+                    onNavigate(
+                        AppScreen.CLEANING
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
         }
 
+        /*
+         * TEMPERATURE - FULL WIDTH / ONE LINE
+         */
+
         item {
+
+            MenuCard(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Temperature Checks",
+                icon = Icons.Default.Thermostat,
+                color = Blue,
+                singleLine = true,
+                height = 70.dp
+            ) {
+                onNavigate(
+                    AppScreen.TEMPERATURE
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
+        }
+
+        /*
+         * INSPECTION RECORDS + REPORTS
+         */
+
+        item {
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -403,32 +426,14 @@ fun HomeScreen(
 
                 MenuCard(
                     modifier = Modifier.weight(1f),
-                    title = "Staff\nChecks",
-                    icon = Icons.Default.Groups,
-                    color = Yellow
-                ) {
-                    onNavigate(AppScreen.STAFF)
-                }
-
-                MenuCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Inspection\nRecords",
+                    title = "Inspection Records",
                     icon = Icons.Default.Description,
                     color = Blue
                 ) {
-                    onNavigate(AppScreen.RECORDS)
+                    onNavigate(
+                        AppScreen.RECORDS
+                    )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-        }
-
-        item {
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
 
                 MenuCard(
                     modifier = Modifier.weight(1f),
@@ -436,29 +441,60 @@ fun HomeScreen(
                     icon = Icons.Default.BarChart,
                     color = Lime
                 ) {
-                    onNavigate(AppScreen.REPORTS)
-                }
-
-                MenuCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Restaurant\nSettings",
-                    icon = Icons.Default.Settings,
-                    color = Color.LightGray
-                ) {
-                    onNavigate(AppScreen.SETTINGS)
+                    onNavigate(
+                        AppScreen.REPORTS
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
         }
+
+        /*
+         * RESTAURANT SETTINGS
+         */
+
+        item {
+
+            MenuCard(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Restaurant Settings",
+                icon = Icons.Default.Settings,
+                color = Color.LightGray,
+                singleLine = true,
+                height = 70.dp
+            ) {
+                onNavigate(
+                    AppScreen.SETTINGS
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(18.dp)
+            )
+        }
+
+        /*
+         * PDF BUTTON
+         */
 
         item {
 
             Button(
                 onClick = {
-                    val uri = exportPdf(context, records)
+
+                    val uri = exportPdf(
+                        context,
+                        records
+                    )
+
                     if (uri != null) {
-                        openPdf(context, uri)
+                        openPdf(
+                            context,
+                            uri
+                        )
                     }
                 },
                 modifier = Modifier
@@ -476,7 +512,9 @@ fun HomeScreen(
                     contentDescription = null
                 )
 
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(
+                    modifier = Modifier.width(10.dp)
+                )
 
                 Text(
                     text = "Generate PDF Report",
@@ -484,7 +522,9 @@ fun HomeScreen(
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(
+                    modifier = Modifier.weight(1f)
+                )
 
                 Icon(
                     Icons.Default.ArrowForward,
@@ -492,34 +532,51 @@ fun HomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(25.dp))
+            Spacer(
+                modifier = Modifier.height(25.dp)
+            )
 
             Box(
-    modifier = Modifier.fillMaxWidth(),
-    contentAlignment = Alignment.Center
-) {
-    Text(
-        text = "CanCleaning FoodSafe",
-        color = Gray,
-        fontSize = 12.sp
-    )
-}
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+
+                Text(
+                    text = "Gastro Guard",
+                    color = Gray,
+                    fontSize = 12.sp
+                )
+            }
         }
     }
 }
 
 @Composable
-fun ScoreCard(score: Double?) {
+fun ScoreCard(
+    score: Double?
+) {
 
     val scoreText = score?.let {
-        String.format(Locale.US, "%.1f", it)
+        String.format(
+            Locale.US,
+            "%.1f",
+            it
+        )
     } ?: "—"
 
     val status = when {
-        score == null -> "Not enough data"
-        score >= 8.0 -> "Good"
-        score >= 6.0 -> "Needs Attention"
-        else -> "Action Required"
+
+        score == null ->
+            "Not enough data"
+
+        score >= 8.0 ->
+            "Good"
+
+        score >= 6.0 ->
+            "Needs Attention"
+
+        else ->
+            "Action Required"
     }
 
     Card(
@@ -550,7 +607,10 @@ fun ScoreCard(score: Double?) {
                     progress = {
                         ((score ?: 0.0) / 10.0)
                             .toFloat()
-                            .coerceIn(0f, 1f)
+                            .coerceIn(
+                                0f,
+                                1f
+                            )
                     },
                     modifier = Modifier.fillMaxSize(),
                     strokeWidth = 9.dp,
@@ -559,7 +619,8 @@ fun ScoreCard(score: Double?) {
                 )
 
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment =
+                        Alignment.CenterHorizontally
                 ) {
 
                     Text(
@@ -577,7 +638,9 @@ fun ScoreCard(score: Double?) {
                 }
             }
 
-            Spacer(modifier = Modifier.width(20.dp))
+            Spacer(
+                modifier = Modifier.width(20.dp)
+            )
 
             Column {
 
@@ -588,7 +651,9 @@ fun ScoreCard(score: Double?) {
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
                 Text(
                     text = status,
@@ -597,10 +662,13 @@ fun ScoreCard(score: Double?) {
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(5.dp))
+                Spacer(
+                    modifier = Modifier.height(5.dp)
+                )
 
                 Text(
-                    text = "Based on recorded\nhygiene and safety checks",
+                    text =
+                        "Based on recorded\nhygiene and safety checks",
                     color = Gray,
                     fontSize = 12.sp
                 )
@@ -630,7 +698,8 @@ fun OverviewCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment =
+                Alignment.CenterHorizontally
         ) {
 
             Icon(
@@ -662,13 +731,17 @@ fun MenuCard(
     title: String,
     icon: ImageVector,
     color: Color,
+    singleLine: Boolean = false,
+    height: androidx.compose.ui.unit.Dp = 88.dp,
     onClick: () -> Unit
 ) {
 
     Card(
         modifier = modifier
-            .height(88.dp)
-            .clickable { onClick() },
+            .height(height)
+            .clickable {
+                onClick()
+            },
         colors = CardDefaults.cardColors(
             containerColor = CardColor
         ),
@@ -683,7 +756,8 @@ fun MenuCard(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(13.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
 
             Icon(
@@ -693,13 +767,22 @@ fun MenuCard(
                 modifier = Modifier.size(34.dp)
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(
+                modifier = Modifier.width(12.dp)
+            )
 
             Text(
                 text = title,
                 color = White,
-                fontSize = 14.sp,
+                fontSize = if (singleLine) {
+                    15.sp
+                } else {
+                    14.sp
+                },
                 fontWeight = FontWeight.Medium,
+                maxLines = if (singleLine) 1 else 2,
+                softWrap = !singleLine,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
 
@@ -724,7 +807,8 @@ fun PageHeader(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 20.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
 
         IconButton(
@@ -745,7 +829,9 @@ fun PageHeader(
             modifier = Modifier.size(30.dp)
         )
 
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(
+            modifier = Modifier.width(10.dp)
+        )
 
         Text(
             text = title,
@@ -768,6 +854,7 @@ fun AuditFormScreen(
     val context = LocalContext.current
 
     var date by remember {
+
         mutableStateOf(
             SimpleDateFormat(
                 "dd/MM/yyyy",
@@ -804,7 +891,8 @@ fun AuditFormScreen(
         mutableStateOf("")
     }
 
-    val scrollState = rememberScrollState()
+    val scrollState =
+        rememberScrollState()
 
     Column(
         modifier = Modifier
@@ -826,11 +914,13 @@ fun AuditFormScreen(
             value = date
         ) {
 
-            val calendar = Calendar.getInstance()
+            val calendar =
+                Calendar.getInstance()
 
             DatePickerDialog(
                 context,
                 { _, year, month, day ->
+
                     date = String.format(
                         Locale.getDefault(),
                         "%02d/%02d/%04d",
@@ -839,24 +929,36 @@ fun AuditFormScreen(
                         year
                     )
                 },
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
+                calendar.get(
+                    Calendar.YEAR
+                ),
+                calendar.get(
+                    Calendar.MONTH
+                ),
+                calendar.get(
+                    Calendar.DAY_OF_MONTH
+                )
             ).show()
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         DateField(
             label = "Time",
-            value = time.ifEmpty { "Select time" }
+            value = time.ifEmpty {
+                "Select time"
+            }
         ) {
 
-            val calendar = Calendar.getInstance()
+            val calendar =
+                Calendar.getInstance()
 
             TimePickerDialog(
                 context,
                 { _, hour, minute ->
+
                     time = String.format(
                         Locale.getDefault(),
                         "%02d:%02d",
@@ -864,19 +966,27 @@ fun AuditFormScreen(
                         minute
                     )
                 },
-                calendar.get(Calendar.HOUR_OF_DAY),
-                calendar.get(Calendar.MINUTE),
+                calendar.get(
+                    Calendar.HOUR_OF_DAY
+                ),
+                calendar.get(
+                    Calendar.MINUTE
+                ),
                 true
             ).show()
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         InputField(
-            label = if (type == "Temperature")
-                "Equipment / Location"
-            else
-                "Check Area / Item",
+            label =
+                if (type == "Temperature") {
+                    "Equipment / Location"
+                } else {
+                    "Check Area / Item"
+                },
             value = subject,
             onValueChange = {
                 subject = it
@@ -885,7 +995,9 @@ fun AuditFormScreen(
 
         if (type == "Temperature") {
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
 
             InputField(
                 label = "Temperature °C",
@@ -893,11 +1005,14 @@ fun AuditFormScreen(
                 onValueChange = {
                     temperature = it
                 },
-                keyboardType = KeyboardType.Decimal
+                keyboardType =
+                    KeyboardType.Decimal
             )
         }
 
-        Spacer(modifier = Modifier.height(15.dp))
+        Spacer(
+            modifier = Modifier.height(15.dp)
+        )
 
         Text(
             text = "Result",
@@ -910,17 +1025,20 @@ fun AuditFormScreen(
         ) {
 
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
                 RadioButton(
-                    selected = status == "PASS",
+                    selected =
+                        status == "PASS",
                     onClick = {
                         status = "PASS"
                     },
-                    colors = RadioButtonDefaults.colors(
-                        selectedColor = Green
-                    )
+                    colors =
+                        RadioButtonDefaults.colors(
+                            selectedColor = Green
+                        )
                 )
 
                 Text(
@@ -929,20 +1047,25 @@ fun AuditFormScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.width(30.dp))
+            Spacer(
+                modifier = Modifier.width(30.dp)
+            )
 
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
                 RadioButton(
-                    selected = status == "FAIL",
+                    selected =
+                        status == "FAIL",
                     onClick = {
                         status = "FAIL"
                     },
-                    colors = RadioButtonDefaults.colors(
-                        selectedColor = Red
-                    )
+                    colors =
+                        RadioButtonDefaults.colors(
+                            selectedColor = Red
+                        )
                 )
 
                 Text(
@@ -952,7 +1075,9 @@ fun AuditFormScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(
+            modifier = Modifier.height(10.dp)
+        )
 
         InputField(
             label = "Staff Member",
@@ -962,7 +1087,9 @@ fun AuditFormScreen(
             }
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         InputField(
             label = "Notes",
@@ -974,28 +1101,36 @@ fun AuditFormScreen(
             minLines = 4
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(
+            modifier = Modifier.height(20.dp)
+        )
 
         Button(
             onClick = {
 
                 if (subject.isNotBlank()) {
 
-                    val record = AuditRecord(
-                        id = System.currentTimeMillis(),
-                        type = type,
-                        date = date,
-                        time = time,
-                        subject = subject,
-                        value = temperature,
-                        status = status,
-                        staff = staff,
-                        notes = notes
+                    val record =
+                        AuditRecord(
+                            id =
+                                System.currentTimeMillis(),
+                            type = type,
+                            date = date,
+                            time = time,
+                            subject = subject,
+                            value = temperature,
+                            status = status,
+                            staff = staff,
+                            notes = notes
+                        )
+
+                    saveRecord(
+                        context,
+                        record
                     )
 
-                    saveRecord(context, record)
-
-                    savedMessage = "Record saved successfully"
+                    savedMessage =
+                        "Record saved successfully"
 
                     subject = ""
                     temperature = ""
@@ -1019,7 +1154,9 @@ fun AuditFormScreen(
                 contentDescription = null
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(
+                modifier = Modifier.width(8.dp)
+            )
 
             Text(
                 "Save Record",
@@ -1029,16 +1166,22 @@ fun AuditFormScreen(
 
         if (savedMessage.isNotEmpty()) {
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
 
             Text(
                 text = savedMessage,
                 color = Green,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier.align(
+                    Alignment.CenterHorizontally
+                )
             )
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(
+            modifier = Modifier.height(30.dp)
+        )
     }
 }
 
@@ -1058,18 +1201,22 @@ fun DateField(
             fontSize = 13.sp
         )
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(
+            modifier = Modifier.height(6.dp)
+        )
 
         OutlinedButton(
             onClick = onClick,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = White
-            ),
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                CardBorder
-            )
+            colors =
+                ButtonDefaults.outlinedButtonColors(
+                    contentColor = White
+                ),
+            border =
+                androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    CardBorder
+                )
         ) {
 
             Icon(
@@ -1078,7 +1225,9 @@ fun DateField(
                 tint = Lime
             )
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(
+                modifier = Modifier.width(10.dp)
+            )
 
             Text(
                 value,
@@ -1093,7 +1242,8 @@ fun InputField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    keyboardType: KeyboardType = KeyboardType.Text,
+    keyboardType: KeyboardType =
+        KeyboardType.Text,
     singleLine: Boolean = true,
     minLines: Int = 1
 ) {
@@ -1107,7 +1257,9 @@ fun InputField(
             fontSize = 13.sp
         )
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(
+            modifier = Modifier.height(6.dp)
+        )
 
         OutlinedTextField(
             value = value,
@@ -1115,18 +1267,22 @@ fun InputField(
             modifier = Modifier.fillMaxWidth(),
             singleLine = singleLine,
             minLines = minLines,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = keyboardType
-            ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = White,
-                unfocusedTextColor = White,
-                focusedBorderColor = Lime,
-                unfocusedBorderColor = CardBorder,
-                focusedLabelColor = Lime,
-                unfocusedLabelColor = Gray,
-                cursorColor = Lime
-            )
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardType =
+                        keyboardType
+                ),
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = White,
+                    unfocusedTextColor = White,
+                    focusedBorderColor = Lime,
+                    unfocusedBorderColor =
+                        CardBorder,
+                    focusedLabelColor = Lime,
+                    unfocusedLabelColor = Gray,
+                    cursorColor = Lime
+                )
         )
     }
 }
@@ -1136,9 +1292,11 @@ fun CorrectiveActionScreen(
     onBack: () -> Unit
 ) {
 
-    val context = LocalContext.current
+    val context =
+        LocalContext.current
 
     var date by remember {
+
         mutableStateOf(
             SimpleDateFormat(
                 "dd/MM/yyyy",
@@ -1147,14 +1305,32 @@ fun CorrectiveActionScreen(
         )
     }
 
-    var time by remember { mutableStateOf("") }
-    var issue by remember { mutableStateOf("") }
-    var action by remember { mutableStateOf("") }
-    var staff by remember { mutableStateOf("") }
-    var status by remember { mutableStateOf("OPEN") }
-    var saved by remember { mutableStateOf(false) }
+    var time by remember {
+        mutableStateOf("")
+    }
 
-    val scrollState = rememberScrollState()
+    var issue by remember {
+        mutableStateOf("")
+    }
+
+    var action by remember {
+        mutableStateOf("")
+    }
+
+    var staff by remember {
+        mutableStateOf("")
+    }
+
+    var status by remember {
+        mutableStateOf("OPEN")
+    }
+
+    var saved by remember {
+        mutableStateOf(false)
+    }
+
+    val scrollState =
+        rememberScrollState()
 
     Column(
         modifier = Modifier
@@ -1176,11 +1352,13 @@ fun CorrectiveActionScreen(
             date
         ) {
 
-            val c = Calendar.getInstance()
+            val c =
+                Calendar.getInstance()
 
             DatePickerDialog(
                 context,
                 { _, year, month, day ->
+
                     date = String.format(
                         Locale.getDefault(),
                         "%02d/%02d/%04d",
@@ -1195,18 +1373,24 @@ fun CorrectiveActionScreen(
             ).show()
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         DateField(
             "Time",
-            time.ifEmpty { "Select time" }
+            time.ifEmpty {
+                "Select time"
+            }
         ) {
 
-            val c = Calendar.getInstance()
+            val c =
+                Calendar.getInstance()
 
             TimePickerDialog(
                 context,
                 { _, hour, minute ->
+
                     time = String.format(
                         Locale.getDefault(),
                         "%02d:%02d",
@@ -1214,41 +1398,59 @@ fun CorrectiveActionScreen(
                         minute
                     )
                 },
-                c.get(Calendar.HOUR_OF_DAY),
-                c.get(Calendar.MINUTE),
+                c.get(
+                    Calendar.HOUR_OF_DAY
+                ),
+                c.get(
+                    Calendar.MINUTE
+                ),
                 true
             ).show()
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         InputField(
             "Issue",
             issue,
-            { issue = it },
+            {
+                issue = it
+            },
             singleLine = false,
             minLines = 3
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         InputField(
             "Corrective Action",
             action,
-            { action = it },
+            {
+                action = it
+            },
             singleLine = false,
             minLines = 3
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         InputField(
             "Staff Member",
             staff,
-            { staff = it }
+            {
+                staff = it
+            }
         )
 
-        Spacer(modifier = Modifier.height(15.dp))
+        Spacer(
+            modifier = Modifier.height(15.dp)
+        )
 
         Text(
             "Status",
@@ -1259,17 +1461,20 @@ fun CorrectiveActionScreen(
         Row {
 
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
                 RadioButton(
-                    selected = status == "OPEN",
+                    selected =
+                        status == "OPEN",
                     onClick = {
                         status = "OPEN"
                     },
-                    colors = RadioButtonDefaults.colors(
-                        selectedColor = Orange
-                    )
+                    colors =
+                        RadioButtonDefaults.colors(
+                            selectedColor = Orange
+                        )
                 )
 
                 Text(
@@ -1278,20 +1483,25 @@ fun CorrectiveActionScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.width(25.dp))
+            Spacer(
+                modifier = Modifier.width(25.dp)
+            )
 
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
                 RadioButton(
-                    selected = status == "CLOSED",
+                    selected =
+                        status == "CLOSED",
                     onClick = {
                         status = "CLOSED"
                     },
-                    colors = RadioButtonDefaults.colors(
-                        selectedColor = Green
-                    )
+                    colors =
+                        RadioButtonDefaults.colors(
+                            selectedColor = Green
+                        )
                 )
 
                 Text(
@@ -1301,7 +1511,9 @@ fun CorrectiveActionScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
 
         Button(
             onClick = {
@@ -1311,7 +1523,8 @@ fun CorrectiveActionScreen(
                     saveRecord(
                         context,
                         AuditRecord(
-                            id = System.currentTimeMillis(),
+                            id =
+                                System.currentTimeMillis(),
                             type = "Corrective",
                             date = date,
                             time = time,
@@ -1345,7 +1558,9 @@ fun CorrectiveActionScreen(
                 contentDescription = null
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(
+                modifier = Modifier.width(8.dp)
+            )
 
             Text(
                 "Save Corrective Action",
@@ -1355,12 +1570,16 @@ fun CorrectiveActionScreen(
 
         if (saved) {
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
 
             Text(
                 "Corrective action saved successfully",
                 color = Green,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier.align(
+                    Alignment.CenterHorizontally
+                )
             )
         }
     }
@@ -1371,10 +1590,13 @@ fun RecordsScreen(
     onBack: () -> Unit
 ) {
 
-    val context = LocalContext.current
+    val context =
+        LocalContext.current
 
     var records by remember {
-        mutableStateOf(loadRecords(context))
+        mutableStateOf(
+            loadRecords(context)
+        )
     }
 
     Column(
@@ -1392,7 +1614,8 @@ fun RecordsScreen(
 
         Button(
             onClick = {
-                records = loadRecords(context)
+                records =
+                    loadRecords(context)
             },
             colors = ButtonDefaults.buttonColors(
                 containerColor = CardColor
@@ -1405,18 +1628,23 @@ fun RecordsScreen(
                 tint = Lime
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(
+                modifier = Modifier.width(8.dp)
+            )
 
             Text("Refresh")
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         if (records.isEmpty()) {
 
             Box(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                contentAlignment =
+                    Alignment.Center
             ) {
 
                 Text(
@@ -1429,7 +1657,8 @@ fun RecordsScreen(
         } else {
 
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement =
+                    Arrangement.spacedBy(10.dp)
             ) {
 
                 items(
@@ -1451,20 +1680,25 @@ fun RecordCard(
 ) {
 
     val statusColor =
-        if (record.status == "PASS" || record.status == "CLOSED")
+        if (
+            record.status == "PASS" ||
+            record.status == "CLOSED"
+        ) {
             Green
-        else
+        } else {
             Red
+        }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = CardColor
         ),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            CardBorder
-        )
+        border =
+            androidx.compose.foundation.BorderStroke(
+                1.dp,
+                CardBorder
+            )
     ) {
 
         Column(
@@ -1472,7 +1706,8 @@ fun RecordCard(
         ) {
 
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
                 Text(
@@ -1481,7 +1716,9 @@ fun RecordCard(
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(
+                    modifier = Modifier.weight(1f)
+                )
 
                 Text(
                     record.status,
@@ -1490,7 +1727,9 @@ fun RecordCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(7.dp))
+            Spacer(
+                modifier = Modifier.height(7.dp)
+            )
 
             Text(
                 record.subject,
@@ -1525,7 +1764,9 @@ fun RecordCard(
 
             if (record.notes.isNotEmpty()) {
 
-                Spacer(modifier = Modifier.height(5.dp))
+                Spacer(
+                    modifier = Modifier.height(5.dp)
+                )
 
                 Text(
                     record.notes,
@@ -1542,10 +1783,13 @@ fun ReportsScreen(
     onBack: () -> Unit
 ) {
 
-    val context = LocalContext.current
+    val context =
+        LocalContext.current
 
     var records by remember {
-        mutableStateOf(loadRecords(context))
+        mutableStateOf(
+            loadRecords(context)
+        )
     }
 
     var lastUri by remember {
@@ -1555,7 +1799,9 @@ fun ReportsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(
+                rememberScrollState()
+            )
             .padding(18.dp)
     ) {
 
@@ -1573,24 +1819,30 @@ fun ReportsScreen(
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(
+            modifier = Modifier.height(8.dp)
+        )
 
         Text(
             "Generate a professional PDF report from your recorded checks.",
             color = Gray
         )
 
-        Spacer(modifier = Modifier.height(25.dp))
+        Spacer(
+            modifier = Modifier.height(25.dp)
+        )
 
         Button(
             onClick = {
 
-                records = loadRecords(context)
+                records =
+                    loadRecords(context)
 
-                lastUri = exportPdf(
-                    context,
-                    records
-                )
+                lastUri =
+                    exportPdf(
+                        context,
+                        records
+                    )
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -1606,7 +1858,9 @@ fun ReportsScreen(
                 contentDescription = null
             )
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(
+                modifier = Modifier.width(10.dp)
+            )
 
             Text(
                 "Generate PDF",
@@ -1614,13 +1868,18 @@ fun ReportsScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(15.dp))
+        Spacer(
+            modifier = Modifier.height(15.dp)
+        )
 
         lastUri?.let { uri ->
 
             OutlinedButton(
                 onClick = {
-                    openPdf(context, uri)
+                    openPdf(
+                        context,
+                        uri
+                    )
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -1630,16 +1889,23 @@ fun ReportsScreen(
                     contentDescription = null
                 )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(
+                    modifier = Modifier.width(8.dp)
+                )
 
                 Text("Preview PDF")
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
 
             OutlinedButton(
                 onClick = {
-                    sharePdf(context, uri)
+                    sharePdf(
+                        context,
+                        uri
+                    )
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -1649,7 +1915,9 @@ fun ReportsScreen(
                     contentDescription = null
                 )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(
+                    modifier = Modifier.width(8.dp)
+                )
 
                 Text("Share PDF")
             }
@@ -1662,16 +1930,20 @@ fun SettingsScreen(
     onBack: () -> Unit
 ) {
 
-    val context = LocalContext.current
+    val context =
+        LocalContext.current
 
-    val prefs = remember {
-        context.getSharedPreferences(
-            "restaurant_settings",
-            Context.MODE_PRIVATE
-        )
-    }
+    val prefs =
+        remember {
+
+            context.getSharedPreferences(
+                "restaurant_settings",
+                Context.MODE_PRIVATE
+            )
+        }
 
     var restaurantName by remember {
+
         mutableStateOf(
             prefs.getString(
                 "restaurantName",
@@ -1681,6 +1953,7 @@ fun SettingsScreen(
     }
 
     var address by remember {
+
         mutableStateOf(
             prefs.getString(
                 "address",
@@ -1690,6 +1963,7 @@ fun SettingsScreen(
     }
 
     var phone by remember {
+
         mutableStateOf(
             prefs.getString(
                 "phone",
@@ -1699,6 +1973,7 @@ fun SettingsScreen(
     }
 
     var email by remember {
+
         mutableStateOf(
             prefs.getString(
                 "email",
@@ -1708,6 +1983,7 @@ fun SettingsScreen(
     }
 
     var manager by remember {
+
         mutableStateOf(
             prefs.getString(
                 "manager",
@@ -1723,7 +1999,9 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(
+                rememberScrollState()
+            )
             .padding(18.dp)
             .imePadding()
     ) {
@@ -1738,46 +2016,68 @@ fun SettingsScreen(
         InputField(
             "Restaurant Name",
             restaurantName,
-            { restaurantName = it }
+            {
+                restaurantName = it
+            }
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         InputField(
             "Address",
             address,
-            { address = it },
+            {
+                address = it
+            },
             singleLine = false,
             minLines = 2
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         InputField(
             "Phone",
             phone,
-            { phone = it },
-            keyboardType = KeyboardType.Phone
+            {
+                phone = it
+            },
+            keyboardType =
+                KeyboardType.Phone
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         InputField(
             "Email",
             email,
-            { email = it },
-            keyboardType = KeyboardType.Email
+            {
+                email = it
+            },
+            keyboardType =
+                KeyboardType.Email
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
 
         InputField(
             "Manager / Owner",
             manager,
-            { manager = it }
+            {
+                manager = it
+            }
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(
+            modifier = Modifier.height(20.dp)
+        )
 
         Button(
             onClick = {
@@ -1821,7 +2121,9 @@ fun SettingsScreen(
                 contentDescription = null
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(
+                modifier = Modifier.width(8.dp)
+            )
 
             Text(
                 "Save Restaurant Settings",
@@ -1831,18 +2133,26 @@ fun SettingsScreen(
 
         if (saved) {
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
 
             Text(
                 "Settings saved successfully",
                 color = Green,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier.align(
+                    Alignment.CenterHorizontally
+                )
             )
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(
+            modifier = Modifier.height(30.dp)
+        )
 
-        BrandHeader(compact = true)
+        BrandHeader(
+            compact = true
+        )
     }
 }
 
@@ -1851,35 +2161,39 @@ fun saveRecord(
     record: AuditRecord
 ) {
 
-    val prefs = context.getSharedPreferences(
-        "audit_records",
-        Context.MODE_PRIVATE
-    )
+    val prefs =
+        context.getSharedPreferences(
+            "audit_records",
+            Context.MODE_PRIVATE
+        )
 
-    val current = prefs.getString(
-        "records",
-        ""
-    ) ?: ""
+    val current =
+        prefs.getString(
+            "records",
+            ""
+        ) ?: ""
 
-    val line = listOf(
-        record.id.toString(),
-        record.type,
-        record.date,
-        record.time,
-        record.subject,
-        record.value,
-        record.status,
-        record.staff,
-        record.notes
-    ).joinToString("|")
+    val line =
+        listOf(
+            record.id.toString(),
+            record.type,
+            record.date,
+            record.time,
+            record.subject,
+            record.value,
+            record.status,
+            record.staff,
+            record.notes
+        ).joinToString("|")
 
     prefs.edit()
         .putString(
             "records",
-            if (current.isEmpty())
+            if (current.isEmpty()) {
                 line
-            else
+            } else {
                 "$current\n$line"
+            }
         )
         .apply()
 }
@@ -1888,17 +2202,21 @@ fun loadRecords(
     context: Context
 ): List<AuditRecord> {
 
-    val prefs = context.getSharedPreferences(
-        "audit_records",
-        Context.MODE_PRIVATE
-    )
+    val prefs =
+        context.getSharedPreferences(
+            "audit_records",
+            Context.MODE_PRIVATE
+        )
 
-    val data = prefs.getString(
-        "records",
-        ""
-    ) ?: ""
+    val data =
+        prefs.getString(
+            "records",
+            ""
+        ) ?: ""
 
-    if (data.isBlank()) return emptyList()
+    if (data.isBlank()) {
+        return emptyList()
+    }
 
     return data
         .split("\n")
@@ -1906,12 +2224,14 @@ fun loadRecords(
 
             try {
 
-                val p = line.split("|")
+                val p =
+                    line.split("|")
 
                 if (p.size >= 9) {
 
                     AuditRecord(
-                        id = p[0].toLong(),
+                        id =
+                            p[0].toLong(),
                         type = p[1],
                         date = p[2],
                         time = p[3],
@@ -1927,6 +2247,7 @@ fun loadRecords(
                 }
 
             } catch (_: Exception) {
+
                 null
             }
         }
@@ -1936,23 +2257,29 @@ fun calculateScore(
     records: List<AuditRecord>
 ): Double? {
 
-    if (records.isEmpty()) return null
+    if (records.isEmpty()) {
+        return null
+    }
 
-    val categories = listOf(
-        "Hygiene" to 0.25,
-        "Temperature" to 0.25,
-        "Cleaning" to 0.15,
-        "Corrective" to 0.15,
-        "Staff" to 0.10
-    )
+    val categories =
+        listOf(
+            "Hygiene" to 0.25,
+            "Temperature" to 0.25,
+            "Cleaning" to 0.15,
+            "Corrective" to 0.15,
+            "Staff" to 0.10
+        )
 
     var total = 0.0
     var weight = 0.0
 
     categories.forEach { pair ->
 
-        val category = pair.first
-        val categoryWeight = pair.second
+        val category =
+            pair.first
+
+        val categoryWeight =
+            pair.second
 
         val categoryRecords =
             records.filter {
@@ -1963,6 +2290,7 @@ fun calculateScore(
 
             val passed =
                 categoryRecords.count {
+
                     it.status == "PASS" ||
                             it.status == "CLOSED"
                 }
@@ -1972,21 +2300,28 @@ fun calculateScore(
                         categoryRecords.size.toDouble() *
                         10.0
 
-            total += categoryScore * categoryWeight
+            total +=
+                categoryScore *
+                        categoryWeight
 
-            weight += categoryWeight
+            weight +=
+                categoryWeight
         }
     }
 
-    if (weight == 0.0) return null
+    if (weight == 0.0) {
+        return null
+    }
 
     val completeness =
-        if (records.size >= 10)
+        if (records.size >= 10) {
             10.0
-        else
+        } else {
             records.size.toDouble()
+        }
 
-    total += completeness * 0.10
+    total +=
+        completeness * 0.10
 
     weight += 0.10
 
@@ -2002,7 +2337,8 @@ fun exportPdf(
 
     return try {
 
-        val document = PdfDocument()
+        val document =
+            PdfDocument()
 
         var pageNumber = 1
 
@@ -2014,15 +2350,21 @@ fun exportPdf(
             ).create()
 
         var page =
-            document.startPage(pageInfo)
+            document.startPage(
+                pageInfo
+            )
 
-        var canvas = page.canvas
+        var canvas =
+            page.canvas
 
-        val paint = Paint()
+        val paint =
+            Paint()
 
-        paint.color = android.graphics.Color.BLACK
+        paint.color =
+            android.graphics.Color.BLACK
 
-        paint.textSize = 24f
+        paint.textSize =
+            24f
 
         paint.typeface =
             Typeface.create(
@@ -2037,11 +2379,14 @@ fun exportPdf(
             paint
         )
 
-        paint.textSize = 13f
-        paint.typeface = Typeface.DEFAULT
+        paint.textSize =
+            13f
+
+        paint.typeface =
+            Typeface.DEFAULT
 
         canvas.drawText(
-            "CanCleaning FoodSafe",
+            "Gastro Guard",
             40f,
             80f,
             paint
@@ -2059,7 +2404,8 @@ fun exportPdf(
             paint
         )
 
-        val score = calculateScore(records)
+        val score =
+            calculateScore(records)
 
         paint.typeface =
             Typeface.create(
@@ -2067,7 +2413,8 @@ fun exportPdf(
                 Typeface.BOLD
             )
 
-        paint.textSize = 18f
+        paint.textSize =
+            18f
 
         canvas.drawText(
             "Food Safety Score: ${
@@ -2084,8 +2431,11 @@ fun exportPdf(
             paint
         )
 
-        paint.typeface = Typeface.DEFAULT
-        paint.textSize = 13f
+        paint.typeface =
+            Typeface.DEFAULT
+
+        paint.textSize =
+            13f
 
         var y = 180f
 
@@ -2108,7 +2458,9 @@ fun exportPdf(
 
                     if (y > 780f) {
 
-                        document.finishPage(page)
+                        document.finishPage(
+                            page
+                        )
 
                         pageNumber++
 
@@ -2120,9 +2472,12 @@ fun exportPdf(
                             ).create()
 
                         page =
-                            document.startPage(pageInfo)
+                            document.startPage(
+                                pageInfo
+                            )
 
-                        canvas = page.canvas
+                        canvas =
+                            page.canvas
 
                         y = 55f
                     }
@@ -2219,7 +2574,9 @@ fun exportPdf(
                 }
         }
 
-        document.finishPage(page)
+        document.finishPage(
+            page
+        )
 
         val fileName =
             "Food_Safety_Report_${
@@ -2229,36 +2586,43 @@ fun exportPdf(
                 ).format(Date())
             }.pdf"
 
-        val values = android.content.ContentValues().apply {
+        val values =
+            android.content.ContentValues()
+                .apply {
 
-            put(
-                MediaStore.Downloads.DISPLAY_NAME,
-                fileName
+                    put(
+                        MediaStore.Downloads.DISPLAY_NAME,
+                        fileName
+                    )
+
+                    put(
+                        MediaStore.Downloads.MIME_TYPE,
+                        "application/pdf"
+                    )
+
+                    put(
+                        MediaStore.Downloads.RELATIVE_PATH,
+                        "Download"
+                    )
+                }
+
+        val resolver =
+            context.contentResolver
+
+        val uri =
+            resolver.insert(
+                MediaStore.Downloads
+                    .EXTERNAL_CONTENT_URI,
+                values
             )
-
-            put(
-                MediaStore.Downloads.MIME_TYPE,
-                "application/pdf"
-            )
-
-            put(
-                MediaStore.Downloads.RELATIVE_PATH,
-                "Download"
-            )
-        }
-
-        val resolver = context.contentResolver
-
-        val uri = resolver.insert(
-            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-            values
-        )
 
         if (uri != null) {
 
-            resolver.openOutputStream(uri)?.use {
-                document.writeTo(it)
-            }
+            resolver
+                .openOutputStream(uri)
+                ?.use {
+                    document.writeTo(it)
+                }
 
             document.close()
 
@@ -2284,21 +2648,24 @@ fun openPdf(
 
     try {
 
-        val intent = Intent(
-            Intent.ACTION_VIEW
-        ).apply {
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW
+            ).apply {
 
-            setDataAndType(
-                uri,
-                "application/pdf"
-            )
+                setDataAndType(
+                    uri,
+                    "application/pdf"
+                )
 
-            addFlags(
-                Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
-        }
+                addFlags(
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
 
-        context.startActivity(intent)
+        context.startActivity(
+            intent
+        )
 
     } catch (_: Exception) {
 
@@ -2314,21 +2681,23 @@ fun sharePdf(
     uri: Uri
 ) {
 
-    val intent = Intent(
-        Intent.ACTION_SEND
-    ).apply {
+    val intent =
+        Intent(
+            Intent.ACTION_SEND
+        ).apply {
 
-        type = "application/pdf"
+            type =
+                "application/pdf"
 
-        putExtra(
-            Intent.EXTRA_STREAM,
-            uri
-        )
+            putExtra(
+                Intent.EXTRA_STREAM,
+                uri
+            )
 
-        addFlags(
-            Intent.FLAG_GRANT_READ_URI_PERMISSION
-        )
-    }
+            addFlags(
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        }
 
     context.startActivity(
         Intent.createChooser(
