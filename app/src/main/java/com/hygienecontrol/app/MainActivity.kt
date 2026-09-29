@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,7 +34,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -47,7 +45,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -108,8 +105,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun exportPdf(context: Context, records: List<AuditRecord>): Uri? {
+    fun exportPdf(
+        context: Context,
+        records: List<AuditRecord>
+    ): Uri? {
+
         return try {
+
             val pdf = PdfDocument()
 
             val pageWidth = 595
@@ -139,6 +141,7 @@ class MainActivity : ComponentActivity() {
             }
 
             var pageNumber = 1
+
             var page = pdf.startPage(
                 PdfDocument.PageInfo.Builder(
                     pageWidth,
@@ -160,7 +163,12 @@ class MainActivity : ComponentActivity() {
             y += 28
 
             canvas.drawText(
-                "Generated: ${SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())}",
+                "Generated: ${
+                    SimpleDateFormat(
+                        "dd/MM/yyyy HH:mm",
+                        Locale.getDefault()
+                    ).format(Date())
+                }",
                 margin.toFloat(),
                 y.toFloat(),
                 smallPaint
@@ -168,10 +176,11 @@ class MainActivity : ComponentActivity() {
 
             y += 30
 
-            val prefs = context.getSharedPreferences(
-                "restaurant",
-                Context.MODE_PRIVATE
-            )
+            val prefs =
+                context.getSharedPreferences(
+                    "restaurant",
+                    Context.MODE_PRIVATE
+                )
 
             val restaurantName =
                 prefs.getString("name", "") ?: ""
@@ -257,7 +266,13 @@ class MainActivity : ComponentActivity() {
                 if (score == null) {
                     "Score: Not enough data"
                 } else {
-                    "Score: ${String.format(Locale.US, "%.1f", score)} / 10"
+                    "Score: ${
+                        String.format(
+                            Locale.US,
+                            "%.1f",
+                            score
+                        )
+                    } / 10"
                 },
                 margin.toFloat(),
                 y.toFloat(),
@@ -276,17 +291,19 @@ class MainActivity : ComponentActivity() {
             y += 20
 
             if (records.isEmpty()) {
+
                 canvas.drawText(
                     "No records available.",
                     margin.toFloat(),
                     y.toFloat(),
                     textPaint
                 )
+
             } else {
 
                 records.forEach { record ->
 
-                    if (y > pageHeight - 70) {
+                    if (y > pageHeight - 80) {
 
                         canvas.drawText(
                             "Page $pageNumber",
@@ -330,12 +347,14 @@ class MainActivity : ComponentActivity() {
                     y += 14
 
                     if (record.value.isNotBlank()) {
+
                         canvas.drawText(
                             "Value: ${record.value}",
                             margin.toFloat(),
                             y.toFloat(),
                             textPaint
                         )
+
                         y += 14
                     }
 
@@ -358,16 +377,18 @@ class MainActivity : ComponentActivity() {
                     y += 14
 
                     if (record.notes.isNotBlank()) {
+
                         canvas.drawText(
                             "Notes: ${record.notes}",
                             margin.toFloat(),
                             y.toFloat(),
                             textPaint
                         )
+
                         y += 14
                     }
 
-                    y += 12
+                    y += 10
 
                     canvas.drawLine(
                         margin.toFloat(),
@@ -391,59 +412,88 @@ class MainActivity : ComponentActivity() {
             pdf.finishPage(page)
 
             val fileName =
-                "Food_Safety_Report_${SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())}.pdf"
+                "Food_Safety_Report_${
+                    SimpleDateFormat(
+                        "yyyyMMdd_HHmm",
+                        Locale.getDefault()
+                    ).format(Date())
+                }.pdf"
 
-            val values = ContentValues().apply {
-                put(
-                    MediaStore.Downloads.DISPLAY_NAME,
-                    fileName
-                )
-                put(
-                    MediaStore.Downloads.MIME_TYPE,
-                    "application/pdf"
-                )
-                put(
-                    MediaStore.Downloads.RELATIVE_PATH,
-                    Environment.DIRECTORY_DOWNLOADS
-                )
-            }
+            val values =
+                ContentValues().apply {
 
-            val resolver = context.contentResolver
+                    put(
+                        MediaStore.Downloads.DISPLAY_NAME,
+                        fileName
+                    )
 
-            val uri = resolver.insert(
-                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                values
-            )
+                    put(
+                        MediaStore.Downloads.MIME_TYPE,
+                        "application/pdf"
+                    )
+
+                    put(
+                        MediaStore.Downloads.RELATIVE_PATH,
+                        Environment.DIRECTORY_DOWNLOADS
+                    )
+                }
+
+            val resolver =
+                context.contentResolver
+
+            val uri =
+                resolver.insert(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    values
+                )
 
             if (uri != null) {
 
-                resolver.openOutputStream(uri)?.use { output ->
-                    pdf.writeTo(output)
-                }
+                resolver
+                    .openOutputStream(uri)
+                    ?.use { output ->
+                        pdf.writeTo(output)
+                    }
 
                 pdf.close()
 
                 uri
+
             } else {
+
                 pdf.close()
                 null
             }
 
         } catch (e: Exception) {
+
             e.printStackTrace()
             null
         }
     }
 
-    fun openPdf(context: Context, uri: Uri) {
+    fun openPdf(
+        context: Context,
+        uri: Uri
+    ) {
 
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/pdf")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
+        val intent =
+            Intent(Intent.ACTION_VIEW).apply {
+
+                setDataAndType(
+                    uri,
+                    "application/pdf"
+                )
+
+                addFlags(
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
 
         try {
+
             context.startActivity(intent)
+
         } catch (e: Exception) {
 
             Toast.makeText(
@@ -454,13 +504,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun sharePdf(context: Context, uri: Uri) {
+    fun sharePdf(
+        context: Context,
+        uri: Uri
+    ) {
 
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/pdf"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
+        val intent =
+            Intent(Intent.ACTION_SEND).apply {
+
+                type = "application/pdf"
+
+                putExtra(
+                    Intent.EXTRA_STREAM,
+                    uri
+                )
+
+                addFlags(
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
 
         context.startActivity(
             Intent.createChooser(
@@ -470,13 +532,25 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    fun printPdf(context: Context, uri: Uri) {
+    fun printPdf(
+        context: Context,
+        uri: Uri
+    ) {
 
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/pdf"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
+        val intent =
+            Intent(Intent.ACTION_SEND).apply {
+
+                type = "application/pdf"
+
+                putExtra(
+                    Intent.EXTRA_STREAM,
+                    uri
+                )
+
+                addFlags(
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
 
         context.startActivity(
             Intent.createChooser(
@@ -489,21 +563,33 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun HygieneControlApp() {
 
+        val context = LocalContext.current
+
         var currentScreen by remember {
-            mutableStateOf(AppScreen.HOME)
+            mutableStateOf(
+                AppScreen.HOME
+            )
         }
 
         var records by remember {
-            mutableStateOf(loadRecords(this))
+            mutableStateOf(
+                loadRecords(context)
+            )
         }
 
-        val context = LocalContext.current
-
         BackHandler {
-            if (currentScreen == AppScreen.HOME) {
+
+            if (
+                currentScreen ==
+                AppScreen.HOME
+            ) {
+
                 finish()
+
             } else {
-                currentScreen = AppScreen.HOME
+
+                currentScreen =
+                    AppScreen.HOME
             }
         }
 
@@ -512,139 +598,170 @@ class MainActivity : ComponentActivity() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(DarkBackground)
+                    .background(
+                        DarkBackground
+                    )
             ) {
 
                 when (currentScreen) {
 
-                    AppScreen.HOME -> HomeScreen(
-                        records = records,
-                        onNavigate = {
-                            currentScreen = it
-                        },
-                        onExportPdf = {
-                            val uri = exportPdf(
-                                context,
-                                records
-                            )
+                    AppScreen.HOME -> {
 
-                            if (uri != null) {
-                                openPdf(
-                                    context,
-                                    uri
-                                )
+                        HomeScreen(
+                            records = records,
+                            onNavigate = {
+                                currentScreen = it
+                            },
+                            onExportPdf = {
+
+                                val uri =
+                                    exportPdf(
+                                        context,
+                                        records
+                                    )
+
+                                if (uri != null) {
+
+                                    openPdf(
+                                        context,
+                                        uri
+                                    )
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
 
-                    AppScreen.HYGIENE -> AuditFormScreen(
-                        title = "Hygiene Check",
-                        type = "Hygiene",
-                        onBack = {
-                            currentScreen = AppScreen.HOME
-                        },
-                        onSave = {
-                            records = loadRecords(this)
-                        }
-                    )
+                    AppScreen.HYGIENE -> {
 
-                    AppScreen.TEMPERATURE -> AuditFormScreen(
-                        title = "Temperature Check",
-                        type = "Temperature",
-                        onBack = {
-                            currentScreen = AppScreen.HOME
-                        },
-                        onSave = {
-                            records = loadRecords(this)
-                        }
-                    )
+                        AuditFormScreen(
+                            title = "Hygiene Check",
+                            type = "Hygiene",
+                            onBack = {
+                                currentScreen =
+                                    AppScreen.HOME
+                            },
+                            onSave = {
 
-                    AppScreen.CLEANING -> AuditFormScreen(
-                        title = "Cleaning Check",
-                        type = "Cleaning",
-                        onBack = {
-                            currentScreen = AppScreen.HOME
-                        },
-                        onSave = {
-                            records = loadRecords(this)
-                        }
-                    )
-
-                    AppScreen.STAFF -> AuditFormScreen(
-                        title = "Staff Check",
-                        type = "Staff",
-                        onBack = {
-                            currentScreen = AppScreen.HOME
-                        },
-                        onSave = {
-                            records = loadRecords(this)
-                        }
-                    )
-
-                    AppScreen.CORRECTIVE -> CorrectiveActionScreen(
-                        onBack = {
-                            currentScreen = AppScreen.HOME
-                        },
-                        onSave = {
-                            records = loadRecords(this)
-                        }
-                    )
-
-                    AppScreen.RECORDS -> RecordsScreen(
-                        records = records,
-                        onBack = {
-                            currentScreen = AppScreen.HOME
-                        }
-                    )
-
-                    AppScreen.REPORTS -> ReportsScreen(
-                        records = records,
-                        onBack = {
-                            currentScreen = AppScreen.HOME
-                        },
-                        onExport = {
-
-                            val uri = exportPdf(
-                                context,
-                                records
-                            )
-
-                            if (uri != null) {
-
-                                Toast.makeText(
-                                    context,
-                                    "PDF saved to Downloads",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-
-                                openPdf(
-                                    context,
-                                    uri
-                                )
+                                records =
+                                    loadRecords(
+                                        context
+                                    )
                             }
-                        },
-                        onShare = { uri ->
-                            sharePdf(
-                                context,
-                                uri
-                            )
-                        }
-                    )
+                        )
+                    }
 
-                    AppScreen.SETTINGS -> SettingsScreen(
-                        onBack = {
-                            currentScreen = AppScreen.HOME
-                        }
-                    )
+                    AppScreen.TEMPERATURE -> {
+
+                        AuditFormScreen(
+                            title = "Temperature Check",
+                            type = "Temperature",
+                            onBack = {
+                                currentScreen =
+                                    AppScreen.HOME
+                            },
+                            onSave = {
+
+                                records =
+                                    loadRecords(
+                                        context
+                                    )
+                            }
+                        )
+                    }
+
+                    AppScreen.CLEANING -> {
+
+                        AuditFormScreen(
+                            title = "Cleaning Check",
+                            type = "Cleaning",
+                            onBack = {
+                                currentScreen =
+                                    AppScreen.HOME
+                            },
+                            onSave = {
+
+                                records =
+                                    loadRecords(
+                                        context
+                                    )
+                            }
+                        )
+                    }
+
+                    AppScreen.STAFF -> {
+
+                        AuditFormScreen(
+                            title = "Staff Check",
+                            type = "Staff",
+                            onBack = {
+                                currentScreen =
+                                    AppScreen.HOME
+                            },
+                            onSave = {
+
+                                records =
+                                    loadRecords(
+                                        context
+                                    )
+                            }
+                        )
+                    }
+
+                    AppScreen.CORRECTIVE -> {
+
+                        CorrectiveActionScreen(
+                            onBack = {
+                                currentScreen =
+                                    AppScreen.HOME
+                            },
+                            onSave = {
+
+                                records =
+                                    loadRecords(
+                                        context
+                                    )
+                            }
+                        )
+                    }
+
+                    AppScreen.RECORDS -> {
+
+                        RecordsScreen(
+                            records = records,
+                            onBack = {
+                                currentScreen =
+                                    AppScreen.HOME
+                            }
+                        )
+                    }
+
+                    AppScreen.REPORTS -> {
+
+                        ReportsScreen(
+                            records = records,
+                            onBack = {
+                                currentScreen =
+                                    AppScreen.HOME
+                            }
+                        )
+                    }
+
+                    AppScreen.SETTINGS -> {
+
+                        SettingsScreen(
+                            onBack = {
+                                currentScreen =
+                                    AppScreen.HOME
+                            }
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-/* ------------------------------------------------ */
 /* HOME */
-/* ------------------------------------------------ */
 
 @Composable
 fun HomeScreen(
@@ -653,12 +770,26 @@ fun HomeScreen(
     onExportPdf: () -> Unit
 ) {
 
-    val score = calculateScore(records)
+    val score =
+        calculateScore(records)
+
+    val today =
+        SimpleDateFormat(
+            "dd/MM/yyyy",
+            Locale.getDefault()
+        ).format(Date())
+
+    val todayRecords =
+        records.filter {
+            it.date == today
+        }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(
+                rememberScrollState()
+            )
             .padding(20.dp)
     ) {
 
@@ -679,9 +810,7 @@ fun HomeScreen(
             Modifier.height(20.dp)
         )
 
-        ScoreCard(
-            score = score
-        )
+        ScoreCard(score)
 
         Spacer(
             Modifier.height(20.dp)
@@ -698,23 +827,13 @@ fun HomeScreen(
             Modifier.height(10.dp)
         )
 
-        val today =
-            SimpleDateFormat(
-                "dd/MM/yyyy",
-                Locale.getDefault()
-            ).format(Date())
-
-        val todayRecords =
-            records.filter {
-                it.date == today
-            }
-
         OverviewCard(
             title = "Completed",
-            value = todayRecords.count {
-                it.status == "PASS" ||
-                        it.status == "CLOSED"
-            }.toString(),
+            value =
+                todayRecords.count {
+                    it.status == "PASS" ||
+                            it.status == "CLOSED"
+                }.toString(),
             color = Green
         )
 
@@ -726,10 +845,11 @@ fun HomeScreen(
 
         OverviewCard(
             title = "Issues",
-            value = todayRecords.count {
-                it.status == "FAIL" ||
-                        it.status == "OPEN"
-            }.toString(),
+            value =
+                todayRecords.count {
+                    it.status == "FAIL" ||
+                            it.status == "OPEN"
+                }.toString(),
             color = Red
         )
 
@@ -737,63 +857,68 @@ fun HomeScreen(
             Modifier.height(20.dp)
         )
 
-        Text(
-            text = "Quick Actions",
-            color = White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(
-            Modifier.height(10.dp)
-        )
-
         MenuButton(
             "Hygiene Checks"
         ) {
-            onNavigate(AppScreen.HYGIENE)
+            onNavigate(
+                AppScreen.HYGIENE
+            )
         }
 
         MenuButton(
             "Temperature Checks"
         ) {
-            onNavigate(AppScreen.TEMPERATURE)
+            onNavigate(
+                AppScreen.TEMPERATURE
+            )
         }
 
         MenuButton(
             "Cleaning Checks"
         ) {
-            onNavigate(AppScreen.CLEANING)
+            onNavigate(
+                AppScreen.CLEANING
+            )
         }
 
         MenuButton(
             "Corrective Actions"
         ) {
-            onNavigate(AppScreen.CORRECTIVE)
+            onNavigate(
+                AppScreen.CORRECTIVE
+            )
         }
 
         MenuButton(
             "Staff Checks"
         ) {
-            onNavigate(AppScreen.STAFF)
+            onNavigate(
+                AppScreen.STAFF
+            )
         }
 
         MenuButton(
             "Inspection Records"
         ) {
-            onNavigate(AppScreen.RECORDS)
+            onNavigate(
+                AppScreen.RECORDS
+            )
         }
 
         MenuButton(
             "Reports"
         ) {
-            onNavigate(AppScreen.REPORTS)
+            onNavigate(
+                AppScreen.REPORTS
+            )
         }
 
         MenuButton(
             "Restaurant Settings"
         ) {
-            onNavigate(AppScreen.SETTINGS)
+            onNavigate(
+                AppScreen.SETTINGS
+            )
         }
 
         Spacer(
@@ -824,10 +949,6 @@ fun HomeScreen(
     }
 }
 
-/* ------------------------------------------------ */
-/* SCORE */
-/* ------------------------------------------------ */
-
 @Composable
 fun ScoreCard(
     score: Double?
@@ -857,22 +978,28 @@ fun ScoreCard(
             )
 
             Text(
-                text = if (score == null) {
-                    "— / 10"
-                } else {
-                    "${String.format(Locale.US, "%.1f", score)} / 10"
-                },
+                text =
+                    if (score == null)
+                        "— / 10"
+                    else
+                        "${
+                            String.format(
+                                Locale.US,
+                                "%.1f",
+                                score
+                            )
+                        } / 10",
                 color = Lime,
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = if (score == null) {
-                    "Not enough data"
-                } else {
-                    "Calculated from recorded checks"
-                },
+                text =
+                    if (score == null)
+                        "Not enough data"
+                    else
+                        "Calculated from recorded checks",
                 color = SecondaryText,
                 fontSize = 13.sp
             )
@@ -900,14 +1027,15 @@ fun OverviewCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(18.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement =
+                Arrangement.SpaceBetween,
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
 
             Text(
                 text = title,
-                color = White,
-                fontSize = 16.sp
+                color = White
             )
 
             Text(
@@ -932,9 +1060,10 @@ fun MenuButton(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .height(52.dp),
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = White
-        )
+        colors =
+            ButtonDefaults.outlinedButtonColors(
+                contentColor = White
+            )
     ) {
 
         Text(
@@ -944,9 +1073,7 @@ fun MenuButton(
     }
 }
 
-/* ------------------------------------------------ */
 /* AUDIT FORM */
-/* ------------------------------------------------ */
 
 @Composable
 fun AuditFormScreen(
@@ -956,9 +1083,11 @@ fun AuditFormScreen(
     onSave: () -> Unit
 ) {
 
-    val context = LocalContext.current
+    val context =
+        LocalContext.current
 
     var date by remember {
+
         mutableStateOf(
             SimpleDateFormat(
                 "dd/MM/yyyy",
@@ -1092,10 +1221,7 @@ fun AuditFormScreen(
 
         Text(
             text = "Status",
-            color = SecondaryText,
-            modifier = Modifier.padding(
-                top = 10.dp
-            )
+            color = SecondaryText
         )
 
         Row(
@@ -1104,7 +1230,8 @@ fun AuditFormScreen(
         ) {
 
             RadioButton(
-                selected = status == "PASS",
+                selected =
+                    status == "PASS",
                 onClick = {
                     status = "PASS"
                 }
@@ -1120,7 +1247,8 @@ fun AuditFormScreen(
             )
 
             RadioButton(
-                selected = status == "FAIL",
+                selected =
+                    status == "FAIL",
                 onClick = {
                     status = "FAIL"
                 }
@@ -1150,10 +1278,6 @@ fun AuditFormScreen(
             minLines = 4
         )
 
-        Spacer(
-            Modifier.height(15.dp)
-        )
-
         Button(
             onClick = {
 
@@ -1168,9 +1292,11 @@ fun AuditFormScreen(
                     return@Button
                 }
 
-                val record =
+                saveRecord(
+                    context,
                     AuditRecord(
-                        id = System.currentTimeMillis(),
+                        id =
+                            System.currentTimeMillis(),
                         type = type,
                         date = date,
                         time = time,
@@ -1180,10 +1306,6 @@ fun AuditFormScreen(
                         staff = staff,
                         notes = notes
                     )
-
-                saveRecord(
-                    context,
-                    record
                 )
 
                 Toast.makeText(
@@ -1217,9 +1339,7 @@ fun AuditFormScreen(
     }
 }
 
-/* ------------------------------------------------ */
 /* CORRECTIVE ACTION */
-/* ------------------------------------------------ */
 
 @Composable
 fun CorrectiveActionScreen(
@@ -1227,9 +1347,11 @@ fun CorrectiveActionScreen(
     onSave: () -> Unit
 ) {
 
-    val context = LocalContext.current
+    val context =
+        LocalContext.current
 
     var date by remember {
+
         mutableStateOf(
             SimpleDateFormat(
                 "dd/MM/yyyy",
@@ -1291,9 +1413,15 @@ fun CorrectiveActionScreen(
                                 selected.time
                             )
                     },
-                    calendar.get(Calendar.YEAR),
-                    calendar.get(Calendar.MONTH),
-                    calendar.get(Calendar.DAY_OF_MONTH)
+                    calendar.get(
+                        Calendar.YEAR
+                    ),
+                    calendar.get(
+                        Calendar.MONTH
+                    ),
+                    calendar.get(
+                        Calendar.DAY_OF_MONTH
+                    )
                 ).show()
             }
         )
@@ -1307,7 +1435,7 @@ fun CorrectiveActionScreen(
 
                 TimePickerDialog(
                     context,
-                    { hour, minute ->
+                    { _, hour, minute ->
 
                         time =
                             String.format(
@@ -1317,8 +1445,12 @@ fun CorrectiveActionScreen(
                                 minute
                             )
                     },
-                    calendar.get(Calendar.HOUR_OF_DAY),
-                    calendar.get(Calendar.MINUTE),
+                    calendar.get(
+                        Calendar.HOUR_OF_DAY
+                    ),
+                    calendar.get(
+                        Calendar.MINUTE
+                    ),
                     true
                 ).show()
             }
@@ -1361,14 +1493,15 @@ fun CorrectiveActionScreen(
         ) {
 
             RadioButton(
-                selected = status == "OPEN",
+                selected =
+                    status == "OPEN",
                 onClick = {
                     status = "OPEN"
                 }
             )
 
             Text(
-                "OPEN",
+                text = "OPEN",
                 color = White
             )
 
@@ -1377,21 +1510,18 @@ fun CorrectiveActionScreen(
             )
 
             RadioButton(
-                selected = status == "CLOSED",
+                selected =
+                    status == "CLOSED",
                 onClick = {
                     status = "CLOSED"
                 }
             )
 
             Text(
-                "CLOSED",
+                text = "CLOSED",
                 color = White
             )
         }
-
-        Spacer(
-            Modifier.height(15.dp)
-        )
 
         Button(
             onClick = {
@@ -1410,7 +1540,8 @@ fun CorrectiveActionScreen(
                 saveRecord(
                     context,
                     AuditRecord(
-                        id = System.currentTimeMillis(),
+                        id =
+                            System.currentTimeMillis(),
                         type = "Corrective",
                         date = date,
                         time = time,
@@ -1442,16 +1573,14 @@ fun CorrectiveActionScreen(
         ) {
 
             Text(
-                "Save Corrective Action",
+                text = "Save Corrective Action",
                 fontWeight = FontWeight.Bold
             )
         }
     }
 }
 
-/* ------------------------------------------------ */
 /* RECORDS */
-/* ------------------------------------------------ */
 
 @Composable
 fun RecordsScreen(
@@ -1491,19 +1620,16 @@ fun RecordsScreen(
     }
 }
 
-/* ------------------------------------------------ */
 /* REPORTS */
-/* ------------------------------------------------ */
 
 @Composable
 fun ReportsScreen(
     records: List<AuditRecord>,
-    onBack: () -> Unit,
-    onExport: () -> Unit,
-    onShare: (Uri) -> Unit
+    onBack: () -> Unit
 ) {
 
-    val context = LocalContext.current
+    val context =
+        LocalContext.current
 
     var lastPdfUri by remember {
         mutableStateOf<Uri?>(null)
@@ -1525,11 +1651,17 @@ fun ReportsScreen(
         )
 
         Text(
-            text = if (score == null) {
-                "— / 10"
-            } else {
-                "${String.format(Locale.US, "%.1f", score)} / 10"
-            },
+            text =
+                if (score == null)
+                    "— / 10"
+                else
+                    "${
+                        String.format(
+                            Locale.US,
+                            "%.1f",
+                            score
+                        )
+                    } / 10",
             color = Lime,
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold
@@ -1571,13 +1703,9 @@ fun ReportsScreen(
         ) {
 
             Text(
-                "Generate PDF"
+                text = "Generate PDF"
             )
         }
-
-        Spacer(
-            Modifier.height(10.dp)
-        )
 
         lastPdfUri?.let { uri ->
 
@@ -1589,13 +1717,12 @@ fun ReportsScreen(
                             context,
                             uri
                         )
-
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
 
                 Text(
-                    "Preview PDF"
+                    text = "Preview PDF"
                 )
             }
 
@@ -1607,13 +1734,12 @@ fun ReportsScreen(
                             context,
                             uri
                         )
-
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
 
                 Text(
-                    "Share PDF"
+                    text = "Share PDF"
                 )
             }
 
@@ -1625,13 +1751,12 @@ fun ReportsScreen(
                             context,
                             uri
                         )
-
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
 
                 Text(
-                    "Print / Export"
+                    text = "Print / Export"
                 )
             }
         }
@@ -1641,22 +1766,22 @@ fun ReportsScreen(
         )
 
         Text(
-            text = "The report contains restaurant information, food safety score and recorded checks.",
+            text =
+                "The report contains restaurant information, food safety score and recorded checks.",
             color = SecondaryText
         )
     }
 }
 
-/* ------------------------------------------------ */
 /* SETTINGS */
-/* ------------------------------------------------ */
 
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit
 ) {
 
-    val context = LocalContext.current
+    val context =
+        LocalContext.current
 
     val prefs =
         context.getSharedPreferences(
@@ -1756,10 +1881,6 @@ fun SettingsScreen(
             label = "Manager / Owner"
         )
 
-        Spacer(
-            Modifier.height(15.dp)
-        )
-
         Button(
             onClick = {
 
@@ -1816,9 +1937,7 @@ fun SettingsScreen(
     }
 }
 
-/* ------------------------------------------------ */
-/* CONTAINERS */
-/* ------------------------------------------------ */
+/* CONTAINER */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1852,13 +1971,15 @@ fun ScreenContainer(
                     ) {
 
                         Text(
-                            "Back"
+                            text = "Back"
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground
-                )
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor =
+                            DarkBackground
+                    )
             )
         }
     ) { padding ->
@@ -1881,9 +2002,7 @@ fun ScreenContainer(
     }
 }
 
-/* ------------------------------------------------ */
 /* FIELDS */
-/* ------------------------------------------------ */
 
 @Composable
 fun DateField(
@@ -1896,10 +2015,12 @@ fun DateField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 5.dp),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = CardBackground,
-            contentColor = White
-        )
+        colors =
+            ButtonDefaults.outlinedButtonColors(
+                containerColor =
+                    CardBackground,
+                contentColor = White
+            )
     ) {
 
         Text(
@@ -1923,10 +2044,12 @@ fun TimeField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 5.dp),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = CardBackground,
-            contentColor = White
-        )
+        colors =
+            ButtonDefaults.outlinedButtonColors(
+                containerColor =
+                    CardBackground,
+                contentColor = White
+            )
     ) {
 
         Text(
@@ -1952,6 +2075,7 @@ fun WhiteTextField(
         value = value,
         onValueChange = onValueChange,
         label = {
+
             Text(
                 text = label
             )
@@ -1975,14 +2099,14 @@ fun fieldColors() =
         unfocusedLabelColor = SecondaryText,
         disabledLabelColor = SecondaryText,
         focusedBorderColor = Lime,
-        unfocusedBorderColor = Color(0xFF6F7778),
-        disabledBorderColor = Color(0xFF6F7778),
+        unfocusedBorderColor =
+            Color(0xFF6F7778),
+        disabledBorderColor =
+            Color(0xFF6F7778),
         cursorColor = Lime
     )
 
-/* ------------------------------------------------ */
 /* RECORD CARD */
-/* ------------------------------------------------ */
 
 @Composable
 fun RecordCard(
@@ -2010,7 +2134,8 @@ fun RecordCard(
             )
 
             Text(
-                text = "${record.date} ${record.time}",
+                text =
+                    "${record.date} ${record.time}",
                 color = SecondaryText,
                 fontSize = 12.sp
             )
@@ -2034,7 +2159,8 @@ fun RecordCard(
             }
 
             Text(
-                text = "Status: ${record.status}",
+                text =
+                    "Status: ${record.status}",
                 color =
                     if (
                         record.status == "PASS" ||
@@ -2048,7 +2174,8 @@ fun RecordCard(
             if (record.staff.isNotBlank()) {
 
                 Text(
-                    text = "Staff: ${record.staff}",
+                    text =
+                        "Staff: ${record.staff}",
                     color = SecondaryText
                 )
             }
@@ -2064,9 +2191,7 @@ fun RecordCard(
     }
 }
 
-/* ------------------------------------------------ */
-/* SCORE CALCULATION */
-/* ------------------------------------------------ */
+/* SCORE */
 
 fun calculateScore(
     records: List<AuditRecord>
@@ -2127,10 +2252,10 @@ fun calculateScore(
     }
 
     val completeness =
-        when {
-            records.size >= 10 -> 10.0
-            else -> records.size.toDouble()
-        }
+        if (records.size >= 10)
+            10.0
+        else
+            records.size.toDouble()
 
     total += completeness * 0.10
     weight += 0.10
@@ -2140,9 +2265,7 @@ fun calculateScore(
     ) / 10.0
 }
 
-/* ------------------------------------------------ */
-/* PERSISTENCE */
-/* ------------------------------------------------ */
+/* STORAGE */
 
 fun saveRecord(
     context: Context,
@@ -2172,15 +2295,18 @@ fun saveRecord(
             record.status,
             record.staff,
             record.notes
-        ).joinToString("|")
-            .replace("\n", " ")
+        )
+            .joinToString("|")
+            .replace(
+                "\n",
+                " "
+            )
 
     val result =
-        if (old.isBlank()) {
+        if (old.isBlank())
             newLine
-        } else {
+        else
             "$old\n$newLine"
-        }
 
     prefs.edit()
         .putString(
@@ -2227,7 +2353,8 @@ fun loadRecords(
                 try {
 
                     AuditRecord(
-                        id = parts[0].toLong(),
+                        id =
+                            parts[0].toLong(),
                         type = parts[1],
                         date = parts[2],
                         time = parts[3],
