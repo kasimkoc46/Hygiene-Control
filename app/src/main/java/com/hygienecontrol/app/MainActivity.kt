@@ -2,40 +2,26 @@ package com.hygienecontrol.app
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.ContentValues
 import android.content.Context
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.OnBackPressedCallback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,58 +29,50 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
-
+import kotlin.math.round
 
 private val Background = Color(0xFF0D1112)
 private val CardColor = Color(0xFF171D1E)
 private val SecondaryText = Color(0xFF9BA4A5)
 private val Lime = Color(0xFFB7E11B)
 private val Danger = Color(0xFFE57373)
+private val Warning = Color(0xFFFFB74D)
 private val White = Color.White
 
-
-data class HygieneRecord(
+data class AuditRecord(
     val id: Long,
+    val type: String,
     val date: String,
     val time: String,
-    val area: String,
-    val item: String,
+    val subject: String,
+    val value: String,
     val status: String,
     val staff: String,
     val notes: String
 )
 
-
-data class TemperatureRecord(
-    val id: Long,
-    val date: String,
-    val time: String,
-    val equipment: String,
-    val temperature: String,
-    val status: String,
-    val staff: String,
-    val notes: String
+data class RestaurantInfo(
+    val name: String,
+    val address: String,
+    val phone: String,
+    val email: String,
+    val manager: String
 )
-
 
 enum class AppScreen {
     HOME,
     HYGIENE,
     TEMPERATURE,
     CLEANING,
-    RECORDS,
     CORRECTIVE,
     STAFF,
+    RECORDS,
     REPORTS,
     SETTINGS
 }
-
 
 class MainActivity : ComponentActivity() {
 
@@ -106,19 +84,13 @@ class MainActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(
             this,
             object : OnBackPressedCallback(true) {
-
                 override fun handleOnBackPressed() {
-
                     if (currentScreen != AppScreen.HOME) {
-
                         currentScreen = AppScreen.HOME
-
                         setContent {
                             HygieneControlApp()
                         }
-
                     } else {
-
                         isEnabled = false
                         onBackPressedDispatcher.onBackPressed()
                     }
@@ -131,412 +103,421 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
-    fun navigateTo(screen: AppScreen) {
-
+    private fun navigateTo(screen: AppScreen) {
         currentScreen = screen
-
         setContent {
             HygieneControlApp()
         }
     }
 
-
     @Composable
-    fun HygieneControlApp() {
+    private fun HygieneControlApp() {
 
         val context = LocalContext.current
 
         val records = remember {
-            mutableStateListOf<HygieneRecord>().apply {
+            mutableStateListOf<AuditRecord>().apply {
                 addAll(loadRecords(context))
             }
         }
 
         MaterialTheme {
-
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = Background
             ) {
-
                 when (currentScreen) {
 
-                    AppScreen.HOME -> {
+                    AppScreen.HOME -> HomeScreen(
+                        records = records,
+                        onNavigate = { navigateTo(it) }
+                    )
 
-                        HomeScreen(
-                            records = records,
-                            onNavigate = { navigateTo(it) }
-                        )
-                    }
+                    AppScreen.HYGIENE -> AuditFormScreen(
+                        title = "Hygiene Checks",
+                        subtitle = "Daily food safety and hygiene controls",
+                        type = "Hygiene",
+                        subjectLabel = "Hygiene Item",
+                        subjectPlaceholder = "e.g. Hand washing area",
+                        valueLabel = "Check Area",
+                        valuePlaceholder = "e.g. Kitchen",
+                        onBack = { navigateTo(AppScreen.HOME) },
+                        onSave = {
+                            records.add(0, it)
+                            saveRecords(context, records)
+                            navigateTo(AppScreen.RECORDS)
+                        }
+                    )
 
+                    AppScreen.TEMPERATURE -> AuditFormScreen(
+                        title = "Temperature Checks",
+                        subtitle = "Record fridge, freezer and food temperatures",
+                        type = "Temperature",
+                        subjectLabel = "Equipment / Location",
+                        subjectPlaceholder = "e.g. Fridge 1",
+                        valueLabel = "Temperature (°C)",
+                        valuePlaceholder = "e.g. 4.2",
+                        onBack = { navigateTo(AppScreen.HOME) },
+                        onSave = {
+                            records.add(0, it)
+                            saveRecords(context, records)
+                            navigateTo(AppScreen.RECORDS)
+                        }
+                    )
 
-                    AppScreen.HYGIENE -> {
+                    AppScreen.CLEANING -> AuditFormScreen(
+                        title = "Cleaning Checks",
+                        subtitle = "Record cleaning tasks and completion",
+                        type = "Cleaning",
+                        subjectLabel = "Cleaning Task",
+                        subjectPlaceholder = "e.g. Kitchen floor",
+                        valueLabel = "Area",
+                        valuePlaceholder = "e.g. Kitchen",
+                        onBack = { navigateTo(AppScreen.HOME) },
+                        onSave = {
+                            records.add(0, it)
+                            saveRecords(context, records)
+                            navigateTo(AppScreen.RECORDS)
+                        }
+                    )
 
-                        HygieneCheckScreen(
-                            onBack = {
-                                navigateTo(AppScreen.HOME)
-                            },
-                            onSave = { record ->
+                    AppScreen.CORRECTIVE -> CorrectiveActionScreen(
+                        onBack = { navigateTo(AppScreen.HOME) },
+                        onSave = {
+                            records.add(0, it)
+                            saveRecords(context, records)
+                            navigateTo(AppScreen.RECORDS)
+                        }
+                    )
 
-                                records.add(0, record)
+                    AppScreen.STAFF -> AuditFormScreen(
+                        title = "Staff Checks",
+                        subtitle = "Record staff hygiene and training checks",
+                        type = "Staff",
+                        subjectLabel = "Staff Member",
+                        subjectPlaceholder = "e.g. John",
+                        valueLabel = "Check",
+                        valuePlaceholder = "e.g. Hand hygiene",
+                        onBack = { navigateTo(AppScreen.HOME) },
+                        onSave = {
+                            records.add(0, it)
+                            saveRecords(context, records)
+                            navigateTo(AppScreen.RECORDS)
+                        }
+                    )
 
-                                saveRecords(
-                                    context,
-                                    records
-                                )
+                    AppScreen.RECORDS -> RecordsScreen(
+                        records = records,
+                        onBack = { navigateTo(AppScreen.HOME) },
+                        onDelete = {
+                            records.remove(it)
+                            saveRecords(context, records)
+                        }
+                    )
 
-                                navigateTo(AppScreen.RECORDS)
-                            }
-                        )
-                    }
+                    AppScreen.REPORTS -> ReportsScreen(
+                        records = records,
+                        onBack = { navigateTo(AppScreen.HOME) }
+                    )
 
-
-                    AppScreen.RECORDS -> {
-
-                        RecordsScreen(
-                            records = records,
-                            onBack = {
-                                navigateTo(AppScreen.HOME)
-                            },
-                            onDelete = { record ->
-
-                                records.remove(record)
-
-                                saveRecords(
-                                    context,
-                                    records
-                                )
-                            }
-                        )
-                    }
-
-
-                    AppScreen.SETTINGS -> {
-
-                        RestaurantSettingsScreen(
-                            onBack = {
-                                navigateTo(AppScreen.HOME)
-                            }
-                        )
-                    }
-
-
-                    AppScreen.TEMPERATURE -> {
-
-                        TemperatureCheckScreen(
-                            onBack = {
-                                navigateTo(AppScreen.HOME)
-                            }
-                        )
-                    }
-
-
-                    AppScreen.CLEANING -> {
-
-                        SimpleScreen(
-                            title = "Cleaning Checks",
-                            subtitle = "Cleaning tasks and completion records",
-                            onBack = {
-                                navigateTo(AppScreen.HOME)
-                            }
-                        )
-                    }
-
-
-                    AppScreen.CORRECTIVE -> {
-
-                        SimpleScreen(
-                            title = "Corrective Actions",
-                            subtitle = "Record problems and corrective measures",
-                            onBack = {
-                                navigateTo(AppScreen.HOME)
-                            }
-                        )
-                    }
-
-
-                    AppScreen.STAFF -> {
-
-                        SimpleScreen(
-                            title = "Staff Checks",
-                            subtitle = "Staff hygiene and training records",
-                            onBack = {
-                                navigateTo(AppScreen.HOME)
-                            }
-                        )
-                    }
-
-
-                    AppScreen.REPORTS -> {
-
-                        SimpleScreen(
-                            title = "Reports",
-                            subtitle = "Generate inspection reports",
-                            onBack = {
-                                navigateTo(AppScreen.HOME)
-                            }
-                        )
-                    }
+                    AppScreen.SETTINGS -> SettingsScreen(
+                        onBack = { navigateTo(AppScreen.HOME) }
+                    )
                 }
             }
         }
     }
 }
 
-
 @Composable
 fun HomeScreen(
-    records: List<HygieneRecord>,
+    records: List<AuditRecord>,
     onNavigate: (AppScreen) -> Unit
 ) {
+
+    val score = calculateScore(records)
+    val hygiene = categoryScore(records, "Hygiene")
+    val temperature = categoryScore(records, "Temperature")
+    val cleaning = categoryScore(records, "Cleaning")
+    val corrective = categoryScore(records, "Corrective")
+    val staff = categoryScore(records, "Staff")
+
+    val completed = records.count { it.status == "PASS" }
+    val issues = records.count { it.status == "FAIL" }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp)
             .navigationBarsPadding()
+            .padding(horizontal = 20.dp)
     ) {
 
         item {
-
-            Spacer(
-                modifier = Modifier.height(18.dp)
-            )
+            Spacer(Modifier.height(18.dp))
 
             Text(
-                text = "HYGIENE CONTROL",
+                "HYGIENE CONTROL",
                 color = Lime,
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "Restaurant Food Safety Management",
+                "Restaurant Food Safety Management",
                 color = SecondaryText,
-                fontSize = 17.sp
+                fontSize = 16.sp
             )
 
-            Spacer(
-                modifier = Modifier.height(28.dp)
-            )
+            Spacer(Modifier.height(22.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = CardColor
+                ),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+
+                Column(
+                    modifier = Modifier.padding(22.dp)
+                ) {
+
+                    Text(
+                        "FOOD SAFETY SCORE",
+                        color = SecondaryText,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(Modifier.height(5.dp))
+
+                    if (score == null) {
+
+                        Text(
+                            "— / 10",
+                            color = White,
+                            fontSize = 42.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            "Not enough data",
+                            color = Warning,
+                            fontSize = 15.sp
+                        )
+
+                    } else {
+
+                        Text(
+                            "${formatScore(score)} / 10",
+                            color = Lime,
+                            fontSize = 42.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            scoreDescription(score),
+                            color = White,
+                            fontSize = 16.sp
+                        )
+
+                        Spacer(Modifier.height(15.dp))
+
+                        ScoreRow("Hygiene", hygiene)
+                        ScoreRow("Temperature", temperature)
+                        ScoreRow("Cleaning", cleaning)
+                        ScoreRow("Corrective Actions", corrective)
+                        ScoreRow("Staff", staff)
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(22.dp))
 
             Text(
-                text = "Today's Overview",
+                "Today's Overview",
                 color = White,
-                fontSize = 24.sp,
+                fontSize = 23.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
+            Spacer(Modifier.height(10.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
 
                 OverviewCard(
-                    modifier = Modifier.weight(1f),
-                    number = records.count {
-                        it.status == "PASS"
-                    }.toString(),
-                    label = "Completed",
-                    numberColor = Lime
+                    Modifier.weight(1f),
+                    completed.toString(),
+                    "Completed",
+                    Lime
                 )
 
                 OverviewCard(
-                    modifier = Modifier.weight(1f),
-                    number = "0",
-                    label = "Pending",
-                    numberColor = Color(0xFFFFB74D)
+                    Modifier.weight(1f),
+                    "0",
+                    "Pending",
+                    Warning
                 )
 
                 OverviewCard(
-                    modifier = Modifier.weight(1f),
-                    number = records.count {
-                        it.status == "FAIL"
-                    }.toString(),
-                    label = "Issues",
-                    numberColor = Danger
+                    Modifier.weight(1f),
+                    issues.toString(),
+                    "Issues",
+                    Danger
                 )
             }
 
-            Spacer(
-                modifier = Modifier.height(30.dp)
-            )
+            Spacer(Modifier.height(25.dp))
 
             Text(
-                text = "Daily Checks",
+                "Daily Checks",
                 color = Lime,
-                fontSize = 22.sp,
+                fontSize = 21.sp,
                 fontWeight = FontWeight.Bold
             )
-
-            Spacer(
-                modifier = Modifier.height(10.dp)
-            )
         }
 
-
         item {
-
             MenuCard(
-                title = "Hygiene Checks",
-                subtitle = "Daily food safety and hygiene controls",
-                onClick = {
-                    onNavigate(AppScreen.HYGIENE)
-                }
-            )
+                "Hygiene Checks",
+                "Daily food safety and hygiene controls"
+            ) {
+                onNavigate(AppScreen.HYGIENE)
+            }
         }
 
-
         item {
-
             MenuCard(
-                title = "Temperature Checks",
-                subtitle = "Fridge, freezer and food temperatures",
-                onClick = {
-                    onNavigate(AppScreen.TEMPERATURE)
-                }
-            )
+                "Temperature Checks",
+                "Fridge, freezer and food temperatures"
+            ) {
+                onNavigate(AppScreen.TEMPERATURE)
+            }
         }
 
-
         item {
-
             MenuCard(
-                title = "Cleaning Checks",
-                subtitle = "Cleaning tasks and completion records",
-                onClick = {
-                    onNavigate(AppScreen.CLEANING)
-                }
-            )
+                "Cleaning Checks",
+                "Cleaning tasks and completion records"
+            ) {
+                onNavigate(AppScreen.CLEANING)
+            }
         }
 
-
         item {
-
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
+            Spacer(Modifier.height(15.dp))
 
             Text(
-                text = "Compliance",
+                "Compliance",
                 color = Lime,
-                fontSize = 22.sp,
+                fontSize = 21.sp,
                 fontWeight = FontWeight.Bold
             )
-
-            Spacer(
-                modifier = Modifier.height(10.dp)
-            )
         }
 
-
         item {
-
             MenuCard(
-                title = "Inspection Records",
-                subtitle = "View and manage inspection history",
-                onClick = {
-                    onNavigate(AppScreen.RECORDS)
-                }
-            )
+                "Corrective Actions",
+                "Record problems and corrective measures"
+            ) {
+                onNavigate(AppScreen.CORRECTIVE)
+            }
         }
 
-
         item {
-
             MenuCard(
-                title = "Corrective Actions",
-                subtitle = "Record problems and corrective measures",
-                onClick = {
-                    onNavigate(AppScreen.CORRECTIVE)
-                }
-            )
+                "Staff Checks",
+                "Staff hygiene and training records"
+            ) {
+                onNavigate(AppScreen.STAFF)
+            }
         }
 
-
         item {
-
             MenuCard(
-                title = "Staff Checks",
-                subtitle = "Staff hygiene and training records",
-                onClick = {
-                    onNavigate(AppScreen.STAFF)
-                }
-            )
+                "Inspection Records",
+                "View all inspection records"
+            ) {
+                onNavigate(AppScreen.RECORDS)
+            }
         }
 
-
         item {
-
             MenuCard(
-                title = "Reports",
-                subtitle = "Generate inspection reports",
-                onClick = {
-                    onNavigate(AppScreen.REPORTS)
-                }
-            )
+                "Reports",
+                "Create inspection PDF reports"
+            ) {
+                onNavigate(AppScreen.REPORTS)
+            }
         }
 
-
         item {
-
             MenuCard(
-                title = "Restaurant Settings",
-                subtitle = "Restaurant information",
-                onClick = {
-                    onNavigate(AppScreen.SETTINGS)
-                }
-            )
+                "Restaurant Settings",
+                "Restaurant information"
+            ) {
+                onNavigate(AppScreen.SETTINGS)
+            }
 
-            Spacer(
-                modifier = Modifier.height(25.dp)
-            )
+            Spacer(Modifier.height(30.dp))
         }
     }
 }
 
+@Composable
+fun ScoreRow(
+    name: String,
+    score: Double?
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(name, color = SecondaryText, fontSize = 14.sp)
+
+        Text(
+            if (score == null) "—" else formatScore(score),
+            color = if (score != null && score < 6) Danger else Lime,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
 
 @Composable
 fun OverviewCard(
     modifier: Modifier,
     number: String,
     label: String,
-    numberColor: Color
+    color: Color
 ) {
-
     Card(
-        modifier = modifier.height(105.dp),
+        modifier = modifier.height(100.dp),
         colors = CardDefaults.cardColors(
             containerColor = CardColor
         ),
-        shape = RoundedCornerShape(20.dp)
+        shape = RoundedCornerShape(18.dp)
     ) {
-
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-
+        Column(Modifier.padding(13.dp)) {
             Text(
-                text = number,
-                color = numberColor,
-                fontSize = 30.sp,
+                number,
+                color = color,
+                fontSize = 27.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = label,
+                label,
                 color = SecondaryText,
-                fontSize = 14.sp
+                fontSize = 12.sp
             )
         }
     }
 }
-
 
 @Composable
 fun MenuCard(
@@ -544,443 +525,70 @@ fun MenuCard(
     subtitle: String,
     onClick: () -> Unit
 ) {
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp)
-            .clickable {
-                onClick()
-            },
+            .padding(vertical = 5.dp)
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = CardColor
         ),
-        shape = RoundedCornerShape(22.dp)
+        shape = RoundedCornerShape(20.dp)
     ) {
-
         Row(
-            modifier = Modifier
+            Modifier
                 .fillMaxWidth()
-                .padding(
-                    horizontal = 28.dp,
-                    vertical = 20.dp
-                ),
+                .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-
+            Column(Modifier.weight(1f)) {
                 Text(
-                    text = title,
+                    title,
                     color = White,
-                    fontSize = 19.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(
-                    modifier = Modifier.height(5.dp)
-                )
+                Spacer(Modifier.height(4.dp))
 
                 Text(
-                    text = subtitle,
+                    subtitle,
                     color = SecondaryText,
-                    fontSize = 14.sp
+                    fontSize = 13.sp
                 )
             }
 
             Text(
-                text = "›",
+                "›",
                 color = Lime,
-                fontSize = 38.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 34.sp
             )
         }
     }
 }
 
-
 @Composable
-fun HygieneCheckScreen(
+fun AuditFormScreen(
+    title: String,
+    subtitle: String,
+    type: String,
+    subjectLabel: String,
+    subjectPlaceholder: String,
+    valueLabel: String,
+    valuePlaceholder: String,
     onBack: () -> Unit,
-    onSave: (HygieneRecord) -> Unit
+    onSave: (AuditRecord) -> Unit
 ) {
 
     val context = LocalContext.current
 
-    var date by remember {
-        mutableStateOf("")
-    }
-
-    var time by remember {
-        mutableStateOf("")
-    }
-
-    var area by remember {
-        mutableStateOf("")
-    }
-
-    var item by remember {
-        mutableStateOf("")
-    }
-
-    var status by remember {
-        mutableStateOf("PASS")
-    }
-
-    var staff by remember {
-        mutableStateOf("")
-    }
-
-    var notes by remember {
-        mutableStateOf("")
-    }
-
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .imePadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 20.dp)
-    ) {
-
-        item {
-
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
-            Text(
-                text = "← Back",
-                color = Lime,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable {
-                    onBack()
-                }
-            )
-
-            Spacer(
-                modifier = Modifier.height(22.dp)
-            )
-
-            Text(
-                text = "Hygiene Check",
-                color = White,
-                fontSize = 34.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = "Record a food safety and hygiene check",
-                color = SecondaryText,
-                fontSize = 17.sp
-            )
-
-            Spacer(
-                modifier = Modifier.height(28.dp)
-            )
-
-
-            DateField(
-                value = date,
-                onClick = {
-
-                    val calendar =
-                        Calendar.getInstance()
-
-                    DatePickerDialog(
-                        context,
-                        { _, year, month, day ->
-
-                            date = String.format(
-                                "%02d/%02d/%04d",
-                                day,
-                                month + 1,
-                                year
-                            )
-                        },
-                        calendar.get(
-                            Calendar.YEAR
-                        ),
-                        calendar.get(
-                            Calendar.MONTH
-                        ),
-                        calendar.get(
-                            Calendar.DAY_OF_MONTH
-                        )
-                    ).show()
-                }
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
-            TimeField(
-                value = time,
-                onClick = {
-
-                    val calendar =
-                        Calendar.getInstance()
-
-                    TimePickerDialog(
-                        context,
-                        { _, hour, minute ->
-
-                            time = String.format(
-                                "%02d:%02d",
-                                hour,
-                                minute
-                            )
-                        },
-                        calendar.get(
-                            Calendar.HOUR_OF_DAY
-                        ),
-                        calendar.get(
-                            Calendar.MINUTE
-                        ),
-                        true
-                    ).show()
-                }
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
-            WhiteTextField(
-                value = area,
-                onValueChange = {
-                    area = it
-                },
-                label = "Check Area"
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
-            WhiteTextField(
-                value = item,
-                onValueChange = {
-                    item = it
-                },
-                label = "Hygiene Item"
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(22.dp)
-            )
-
-
-            Text(
-                text = "Status",
-                color = White,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(10.dp)
-            )
-
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement =
-                    Arrangement.spacedBy(12.dp)
-            ) {
-
-                Button(
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        status = "PASS"
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor =
-                            if (status == "PASS")
-                                Lime
-                            else
-                                CardColor,
-                        contentColor =
-                            if (status == "PASS")
-                                Color.Black
-                            else
-                                White
-                    )
-                ) {
-                    Text("PASS")
-                }
-
-
-                Button(
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        status = "FAIL"
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor =
-                            if (status == "FAIL")
-                                Danger
-                            else
-                                CardColor,
-                        contentColor = White
-                    )
-                ) {
-                    Text("FAIL")
-                }
-            }
-
-
-            Spacer(
-                modifier = Modifier.height(18.dp)
-            )
-
-
-            WhiteTextField(
-                value = staff,
-                onValueChange = {
-                    staff = it
-                },
-                label = "Staff Member"
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
-            WhiteTextField(
-                value = notes,
-                onValueChange = {
-                    notes = it
-                },
-                label = "Notes",
-                singleLine = false,
-                minLines = 4
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(22.dp)
-            )
-
-
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(58.dp),
-                onClick = {
-
-                    if (
-                        date.isNotBlank() &&
-                        time.isNotBlank() &&
-                        area.isNotBlank() &&
-                        item.isNotBlank()
-                    ) {
-
-                        onSave(
-                            HygieneRecord(
-                                id =
-                                    System.currentTimeMillis(),
-                                date = date,
-                                time = time,
-                                area = area,
-                                item = item,
-                                status = status,
-                                staff = staff,
-                                notes = notes
-                            )
-                        )
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Lime,
-                    contentColor = Color.Black
-                ),
-                shape = RoundedCornerShape(30.dp)
-            ) {
-
-                Text(
-                    text = "Save Hygiene Check",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-
-            Spacer(
-                modifier = Modifier.height(35.dp)
-            )
-        }
-    }
-}
-
-
-/* =========================================================
-   TEMPERATURE CHECK SCREEN
-   ========================================================= */
-
-@Composable
-fun TemperatureCheckScreen(
-    onBack: () -> Unit
-) {
-
-    val context = LocalContext.current
-
-
-    var date by remember {
-        mutableStateOf("")
-    }
-
-    var time by remember {
-        mutableStateOf("")
-    }
-
-    var equipment by remember {
-        mutableStateOf("")
-    }
-
-    var temperature by remember {
-        mutableStateOf("")
-    }
-
-    var status by remember {
-        mutableStateOf("PASS")
-    }
-
-    var staff by remember {
-        mutableStateOf("")
-    }
-
-    var notes by remember {
-        mutableStateOf("")
-    }
-
-
-    val temperatureRecords =
-        remember {
-
-            mutableStateListOf<TemperatureRecord>().apply {
-
-                addAll(
-                    loadTemperatureRecords(context)
-                )
-            }
-        }
-
+    var date by remember { mutableStateOf("") }
+    var time by remember { mutableStateOf("") }
+    var subject by remember { mutableStateOf("") }
+    var value by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf("PASS") }
+    var staff by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
 
     LazyColumn(
         modifier = Modifier
@@ -988,197 +596,93 @@ fun TemperatureCheckScreen(
             .imePadding()
             .navigationBarsPadding()
             .padding(horizontal = 20.dp),
-        verticalArrangement =
-            Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
-
         item {
+            Spacer(Modifier.height(12.dp))
 
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
+            BackButton(onBack)
 
-
-            Text(
-                text = "← Back",
-                color = Lime,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable {
-                    onBack()
-                }
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(22.dp)
-            )
-
+            Spacer(Modifier.height(20.dp))
 
             Text(
-                text = "Temperature Checks",
+                title,
                 color = White,
-                fontSize = 32.sp,
+                fontSize = 31.sp,
                 fontWeight = FontWeight.Bold
             )
 
-
             Text(
-                text =
-                    "Record fridge, freezer and food temperatures",
+                subtitle,
                 color = SecondaryText,
-                fontSize = 17.sp
+                fontSize = 16.sp
             )
 
-
-            Spacer(
-                modifier = Modifier.height(18.dp)
-            )
+            Spacer(Modifier.height(10.dp))
         }
 
-
         item {
-
-            DateField(
-                value = date,
-                onClick = {
-
-                    val calendar =
-                        Calendar.getInstance()
-
-                    DatePickerDialog(
-                        context,
-                        { _, year, month, day ->
-
-                            date = String.format(
-                                "%02d/%02d/%04d",
-                                day,
-                                month + 1,
-                                year
-                            )
-                        },
-                        calendar.get(
-                            Calendar.YEAR
-                        ),
-                        calendar.get(
-                            Calendar.MONTH
-                        ),
-                        calendar.get(
-                            Calendar.DAY_OF_MONTH
-                        )
-                    ).show()
-                }
-            )
+            DateField(date) {
+                showDatePicker(context) { date = it }
+            }
         }
 
-
         item {
-
-            TimeField(
-                value = time,
-                onClick = {
-
-                    val calendar =
-                        Calendar.getInstance()
-
-                    TimePickerDialog(
-                        context,
-                        { _, hour, minute ->
-
-                            time = String.format(
-                                "%02d:%02d",
-                                hour,
-                                minute
-                            )
-                        },
-                        calendar.get(
-                            Calendar.HOUR_OF_DAY
-                        ),
-                        calendar.get(
-                            Calendar.MINUTE
-                        ),
-                        true
-                    ).show()
-                }
-            )
+            TimeField(time) {
+                showTimePicker(context) { time = it }
+            }
         }
 
-
         item {
-
             WhiteTextField(
-                value = equipment,
-                onValueChange = {
-                    equipment = it
-                },
-                label = "Equipment / Location"
+                subject,
+                { subject = it },
+                subjectLabel,
+                subjectPlaceholder
             )
         }
 
-
         item {
-
             WhiteTextField(
-                value = temperature,
-                onValueChange = {
-                    temperature = it
-                },
-                label = "Temperature (°C)"
+                value,
+                { value = it },
+                valueLabel,
+                valuePlaceholder
             )
         }
 
-
         item {
-
             Text(
-                text = "Result",
+                "Result",
                 color = White,
-                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold
             )
-
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement =
-                    Arrangement.spacedBy(12.dp)
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
 
                 Button(
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        status = "PASS"
-                    },
+                    Modifier.weight(1f),
+                    onClick = { status = "PASS" },
                     colors = ButtonDefaults.buttonColors(
                         containerColor =
-                            if (status == "PASS")
-                                Lime
-                            else
-                                CardColor,
+                            if (status == "PASS") Lime else CardColor,
                         contentColor =
-                            if (status == "PASS")
-                                Color.Black
-                            else
-                                White
+                            if (status == "PASS") Color.Black else White
                     )
                 ) {
                     Text("PASS")
                 }
 
-
                 Button(
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        status = "FAIL"
-                    },
+                    Modifier.weight(1f),
+                    onClick = { status = "FAIL" },
                     colors = ButtonDefaults.buttonColors(
                         containerColor =
-                            if (status == "FAIL")
-                                Danger
-                            else
-                                CardColor,
-                        contentColor = White
+                            if (status == "FAIL") Danger else CardColor
                     )
                 ) {
                     Text("FAIL")
@@ -1186,329 +690,704 @@ fun TemperatureCheckScreen(
             }
         }
 
-
         item {
-
             WhiteTextField(
-                value = staff,
-                onValueChange = {
-                    staff = it
-                },
-                label = "Staff Member"
+                staff,
+                { staff = it },
+                "Staff Member",
+                "Enter staff name"
             )
         }
 
-
         item {
-
             WhiteTextField(
-                value = notes,
-                onValueChange = {
-                    notes = it
-                },
-                label = "Notes",
-                singleLine = false,
-                minLines = 4
+                notes,
+                { notes = it },
+                "Notes",
+                "Additional notes",
+                false,
+                4
             )
         }
 
-
         item {
-
-            Spacer(
-                modifier = Modifier.height(5.dp)
-            )
-
-
             Button(
-                modifier = Modifier
+                Modifier
                     .fillMaxWidth()
-                    .height(58.dp),
+                    .height(55.dp),
                 onClick = {
 
                     if (
-                        date.isNotBlank() &&
-                        time.isNotBlank() &&
-                        equipment.isNotBlank() &&
-                        temperature.isNotBlank()
+                        date.isBlank() ||
+                        time.isBlank() ||
+                        subject.isBlank() ||
+                        value.isBlank()
                     ) {
-
-                        val record =
-                            TemperatureRecord(
-                                id =
-                                    System.currentTimeMillis(),
-                                date = date,
-                                time = time,
-                                equipment = equipment,
-                                temperature = temperature,
-                                status = status,
-                                staff = staff,
-                                notes = notes
-                            )
-
-
-                        temperatureRecords.add(
-                            0,
-                            record
-                        )
-
-
-                        saveTemperatureRecords(
+                        Toast.makeText(
                             context,
-                            temperatureRecords
-                        )
-
-
-                        date = ""
-                        time = ""
-                        equipment = ""
-                        temperature = ""
-                        staff = ""
-                        notes = ""
-                        status = "PASS"
+                            "Please complete the required fields",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@Button
                     }
+
+                    onSave(
+                        AuditRecord(
+                            System.currentTimeMillis(),
+                            type,
+                            date,
+                            time,
+                            subject,
+                            value,
+                            status,
+                            staff,
+                            notes
+                        )
+                    )
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Lime,
                     contentColor = Color.Black
                 ),
-                shape = RoundedCornerShape(30.dp)
+                shape = RoundedCornerShape(28.dp)
             ) {
-
                 Text(
-                    text = "Save Temperature Record",
-                    fontSize = 16.sp,
+                    "Save $type Record",
                     fontWeight = FontWeight.Bold
                 )
             }
-        }
 
-
-        item {
-
-            Spacer(
-                modifier = Modifier.height(18.dp)
-            )
-
-
-            Text(
-                text = "Temperature Records",
-                color = White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-
-        if (temperatureRecords.isEmpty()) {
-
-            item {
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = CardColor
-                    ),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-
-                    Text(
-                        text = "No temperature records yet.",
-                        color = SecondaryText,
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(20.dp)
-                    )
-                }
-            }
-
-        } else {
-
-            items(
-                items = temperatureRecords,
-                key = {
-                    it.id
-                }
-            ) { record ->
-
-                TemperatureRecordCard(
-                    record = record,
-                    onDelete = {
-
-                        temperatureRecords.remove(
-                            record
-                        )
-
-                        saveTemperatureRecords(
-                            context,
-                            temperatureRecords
-                        )
-                    }
-                )
-            }
-        }
-
-
-        item {
-
-            Spacer(
-                modifier = Modifier.height(30.dp)
-            )
+            Spacer(Modifier.height(30.dp))
         }
     }
 }
 
+@Composable
+fun CorrectiveActionScreen(
+    onBack: () -> Unit,
+    onSave: (AuditRecord) -> Unit
+) {
 
-/* =========================================================
-   TEMPERATURE RECORD CARD
-   ========================================================= */
+    val context = LocalContext.current
+
+    var date by remember { mutableStateOf("") }
+    var time by remember { mutableStateOf("") }
+    var problem by remember { mutableStateOf("") }
+    var action by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf("OPEN") }
+    var staff by remember { mutableStateOf("") }
+
+    LazyColumn(
+        Modifier
+            .fillMaxSize()
+            .imePadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+
+        item {
+            Spacer(Modifier.height(12.dp))
+            BackButton(onBack)
+
+            Spacer(Modifier.height(20.dp))
+
+            Text(
+                "Corrective Actions",
+                color = White,
+                fontSize = 31.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                "Record problems and corrective measures",
+                color = SecondaryText
+            )
+        }
+
+        item {
+            DateField(date) {
+                showDatePicker(context) { date = it }
+            }
+        }
+
+        item {
+            TimeField(time) {
+                showTimePicker(context) { time = it }
+            }
+        }
+
+        item {
+            WhiteTextField(
+                problem,
+                { problem = it },
+                "Problem / Issue",
+                "Describe the problem"
+            )
+        }
+
+        item {
+            WhiteTextField(
+                action,
+                { action = it },
+                "Corrective Action",
+                "What was done?",
+                false,
+                4
+            )
+        }
+
+        item {
+            Text(
+                "Action Status",
+                color = White,
+                fontWeight = FontWeight.Bold
+            )
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+
+                Button(
+                    Modifier.weight(1f),
+                    onClick = { status = "OPEN" },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor =
+                            if (status == "OPEN") Warning else CardColor,
+                        contentColor = Color.Black
+                    )
+                ) {
+                    Text("OPEN")
+                }
+
+                Button(
+                    Modifier.weight(1f),
+                    onClick = { status = "CLOSED" },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor =
+                            if (status == "CLOSED") Lime else CardColor,
+                        contentColor =
+                            if (status == "CLOSED")
+                                Color.Black
+                            else
+                                White
+                    )
+                ) {
+                    Text("CLOSED")
+                }
+            }
+        }
+
+        item {
+            WhiteTextField(
+                staff,
+                { staff = it },
+                "Staff Member",
+                "Responsible person"
+            )
+        }
+
+        item {
+            Button(
+                Modifier
+                    .fillMaxWidth()
+                    .height(55.dp),
+                onClick = {
+
+                    if (
+                        date.isBlank() ||
+                        time.isBlank() ||
+                        problem.isBlank() ||
+                        action.isBlank()
+                    ) {
+                        Toast.makeText(
+                            context,
+                            "Please complete the required fields",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@Button
+                    }
+
+                    onSave(
+                        AuditRecord(
+                            System.currentTimeMillis(),
+                            "Corrective",
+                            date,
+                            time,
+                            problem,
+                            action,
+                            status,
+                            staff,
+                            ""
+                        )
+                    )
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Lime,
+                    contentColor = Color.Black
+                ),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Text(
+                    "Save Corrective Action",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(Modifier.height(30.dp))
+        }
+    }
+}
 
 @Composable
-fun TemperatureRecordCard(
-    record: TemperatureRecord,
+fun RecordsScreen(
+    records: List<AuditRecord>,
+    onBack: () -> Unit,
+    onDelete: (AuditRecord) -> Unit
+) {
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
+    ) {
+
+        Column(
+            Modifier.padding(horizontal = 20.dp)
+        ) {
+
+            Spacer(Modifier.height(12.dp))
+            BackButton(onBack)
+
+            Spacer(Modifier.height(18.dp))
+
+            Text(
+                "Inspection Records",
+                color = White,
+                fontSize = 31.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                "${records.size} total records",
+                color = SecondaryText
+            )
+
+            Spacer(Modifier.height(15.dp))
+        }
+
+        if (records.isEmpty()) {
+
+            Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "No records yet",
+                    color = SecondaryText
+                )
+            }
+
+        } else {
+
+            LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+            ) {
+
+                items(
+                    records,
+                    key = { it.id }
+                ) { record ->
+
+                    RecordCard(
+                        record,
+                        { onDelete(record) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RecordCard(
+    record: AuditRecord,
     onDelete: () -> Unit
 ) {
 
     Card(
-        modifier = Modifier
+        Modifier
             .fillMaxWidth()
-            .padding(vertical = 5.dp),
+            .padding(vertical = 6.dp),
         colors = CardDefaults.cardColors(
             containerColor = CardColor
         ),
         shape = RoundedCornerShape(20.dp)
     ) {
 
-        Column(
-            modifier = Modifier.padding(22.dp)
-        ) {
+        Column(Modifier.padding(20.dp)) {
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement =
-                    Arrangement.SpaceBetween,
-                verticalAlignment =
-                    Alignment.CenterVertically
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
 
                 Text(
-                    text = record.equipment,
-                    color = White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
+                    record.type,
+                    color = Lime,
+                    fontWeight = FontWeight.Bold
                 )
 
-
                 Text(
-                    text = record.status,
+                    record.status,
                     color =
-                        if (record.status == "PASS")
-                            Color.Black
-                        else
-                            White,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .background(
-                            if (record.status == "PASS")
-                                Lime
-                            else
-                                Danger,
-                            RoundedCornerShape(10.dp)
-                        )
-                        .padding(
-                            horizontal = 12.dp,
-                            vertical = 7.dp
-                        )
+                        when (record.status) {
+                            "PASS", "CLOSED" -> Lime
+                            "FAIL" -> Danger
+                            else -> Warning
+                        },
+                    fontWeight = FontWeight.Bold
                 )
             }
 
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
+            Spacer(Modifier.height(7.dp))
 
             Text(
-                text =
-                    "${record.date} • ${record.time}",
-                color = SecondaryText,
-                fontSize = 15.sp
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(15.dp)
-            )
-
-
-            Text(
-                text =
-                    "${record.temperature} °C",
-                color = Lime,
-                fontSize = 28.sp,
+                record.subject,
+                color = White,
+                fontSize = 19.sp,
                 fontWeight = FontWeight.Bold
             )
 
-
-            Spacer(
-                modifier = Modifier.height(10.dp)
+            Text(
+                "${record.date} • ${record.time}",
+                color = SecondaryText
             )
 
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                record.value,
+                color = White
+            )
 
             if (record.staff.isNotBlank()) {
-
                 Text(
-                    text =
-                        "Staff Member: ${record.staff}",
-                    color = SecondaryText,
-                    fontSize = 15.sp
+                    "Staff: ${record.staff}",
+                    color = SecondaryText
                 )
             }
-
 
             if (record.notes.isNotBlank()) {
-
-                Spacer(
-                    modifier = Modifier.height(8.dp)
-                )
-
                 Text(
-                    text = "Notes",
-                    color = SecondaryText,
-                    fontSize = 14.sp
-                )
-
-                Text(
-                    text = record.notes,
-                    color = White,
-                    fontSize = 15.sp
+                    "Notes: ${record.notes}",
+                    color = SecondaryText
                 )
             }
 
-
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
-
-            TextButton(
-                onClick = onDelete
-            ) {
-
+            TextButton(onClick = onDelete) {
                 Text(
-                    text = "Delete record",
-                    color = Danger,
-                    fontWeight = FontWeight.Bold
+                    "Delete record",
+                    color = Danger
                 )
             }
         }
     }
 }
 
+@Composable
+fun ReportsScreen(
+    records: List<AuditRecord>,
+    onBack: () -> Unit
+) {
 
-/* =========================================================
-   DATE FIELD
-   ========================================================= */
+    val context = LocalContext.current
+
+    var startDate by remember { mutableStateOf("") }
+    var endDate by remember { mutableStateOf("") }
+
+    val score = calculateScore(records)
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .imePadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp)
+    ) {
+
+        Spacer(Modifier.height(12.dp))
+
+        BackButton(onBack)
+
+        Spacer(Modifier.height(20.dp))
+
+        Text(
+            "Reports",
+            color = White,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            "Create a professional food safety report",
+            color = SecondaryText
+        )
+
+        Spacer(Modifier.height(25.dp))
+
+        DateField(startDate) {
+            showDatePicker(context) {
+                startDate = it
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        DateField(
+            endDate
+        ) {
+            showDatePicker(context) {
+                endDate = it
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        Card(
+            Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = CardColor
+            ),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+
+            Column(Modifier.padding(20.dp)) {
+
+                Text(
+                    "Food Safety Score",
+                    color = SecondaryText
+                )
+
+                Text(
+                    if (score == null)
+                        "— / 10"
+                    else
+                        "${formatScore(score)} / 10",
+                    color = Lime,
+                    fontSize = 34.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    "${records.size} records available",
+                    color = SecondaryText
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        Button(
+            Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            onClick = {
+
+                if (startDate.isBlank() ||
+                    endDate.isBlank()
+                ) {
+
+                    Toast.makeText(
+                        context,
+                        "Please select both dates",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                } else {
+
+                    generatePdfReport(
+                        context,
+                        records,
+                        startDate,
+                        endDate,
+                        score
+                    )
+                }
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Lime,
+                contentColor = Color.Black
+            ),
+            shape = RoundedCornerShape(28.dp)
+        ) {
+
+            Text(
+                "Generate PDF Report",
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun SettingsScreen(
+    onBack: () -> Unit
+) {
+
+    val context = LocalContext.current
+
+    var name by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var manager by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+
+        val p = context.getSharedPreferences(
+            "restaurant",
+            Context.MODE_PRIVATE
+        )
+
+        name = p.getString("name", "") ?: ""
+        address = p.getString("address", "") ?: ""
+        phone = p.getString("phone", "") ?: ""
+        email = p.getString("email", "") ?: ""
+        manager = p.getString("manager", "") ?: ""
+    }
+
+    LazyColumn(
+        Modifier
+            .fillMaxSize()
+            .imePadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+
+        item {
+
+            Spacer(Modifier.height(12.dp))
+            BackButton(onBack)
+
+            Spacer(Modifier.height(20.dp))
+
+            Text(
+                "Restaurant Settings",
+                color = White,
+                fontSize = 31.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        item {
+            WhiteTextField(
+                name,
+                { name = it },
+                "Restaurant Name",
+                "Restaurant name"
+            )
+        }
+
+        item {
+            WhiteTextField(
+                address,
+                { address = it },
+                "Address",
+                "Restaurant address"
+            )
+        }
+
+        item {
+            WhiteTextField(
+                phone,
+                { phone = it },
+                "Phone",
+                "Phone number"
+            )
+        }
+
+        item {
+            WhiteTextField(
+                email,
+                { email = it },
+                "Email",
+                "Email address"
+            )
+        }
+
+        item {
+            WhiteTextField(
+                manager,
+                { manager = it },
+                "Manager / Owner",
+                "Manager name"
+            )
+        }
+
+        item {
+
+            Button(
+                Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                onClick = {
+
+                    context.getSharedPreferences(
+                        "restaurant",
+                        Context.MODE_PRIVATE
+                    )
+                        .edit()
+                        .putString("name", name)
+                        .putString("address", address)
+                        .putString("phone", phone)
+                        .putString("email", email)
+                        .putString("manager", manager)
+                        .apply()
+
+                    Toast.makeText(
+                        context,
+                        "Restaurant information saved",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    onBack()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Lime,
+                    contentColor = Color.Black
+                ),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Text(
+                    "Save Restaurant Information",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(Modifier.height(30.dp))
+        }
+    }
+}
+
+@Composable
+fun BackButton(
+    onBack: () -> Unit
+) {
+    Text(
+        "← Back",
+        color = Lime,
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.clickable {
+            onBack()
+        }
+    )
+}
 
 @Composable
 fun DateField(
@@ -1517,7 +1396,7 @@ fun DateField(
 ) {
 
     Box(
-        modifier = Modifier
+        Modifier
             .fillMaxWidth()
             .clickable {
                 onClick()
@@ -1529,22 +1408,13 @@ fun DateField(
             onValueChange = {},
             readOnly = true,
             enabled = false,
-            label = {
-                Text("Record Date")
-            },
-            placeholder = {
-                Text("Select date")
-            },
+            label = { Text("Record Date") },
+            placeholder = { Text("Select date") },
             modifier = Modifier.fillMaxWidth(),
             colors = fieldColors()
         )
     }
 }
-
-
-/* =========================================================
-   TIME FIELD
-   ========================================================= */
 
 @Composable
 fun TimeField(
@@ -1553,7 +1423,7 @@ fun TimeField(
 ) {
 
     Box(
-        modifier = Modifier
+        Modifier
             .fillMaxWidth()
             .clickable {
                 onClick()
@@ -1565,28 +1435,20 @@ fun TimeField(
             onValueChange = {},
             readOnly = true,
             enabled = false,
-            label = {
-                Text("Time")
-            },
-            placeholder = {
-                Text("Select time")
-            },
+            label = { Text("Time") },
+            placeholder = { Text("Select time") },
             modifier = Modifier.fillMaxWidth(),
             colors = fieldColors()
         )
     }
 }
 
-
-/* =========================================================
-   WHITE TEXT FIELD
-   ========================================================= */
-
 @Composable
 fun WhiteTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
+    placeholder: String = "",
     singleLine: Boolean = true,
     minLines: Int = 1
 ) {
@@ -1594,8 +1456,11 @@ fun WhiteTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = {
-            Text(label)
+        label = { Text(label) },
+        placeholder = {
+            if (placeholder.isNotBlank()) {
+                Text(placeholder)
+            }
         },
         modifier = Modifier.fillMaxWidth(),
         singleLine = singleLine,
@@ -1604,945 +1469,489 @@ fun WhiteTextField(
     )
 }
 
-
-/* =========================================================
-   FIELD COLORS
-   ========================================================= */
-
 @Composable
 fun fieldColors() =
-    androidx.compose.material3
-        .OutlinedTextFieldDefaults
-        .colors(
+    OutlinedTextFieldDefaults.colors(
+        focusedTextColor = White,
+        unfocusedTextColor = White,
+        disabledTextColor = White,
+        focusedLabelColor = Lime,
+        unfocusedLabelColor = SecondaryText,
+        disabledLabelColor = SecondaryText,
+        focusedBorderColor = Lime,
+        unfocusedBorderColor = Color(0xFF6F7778),
+        disabledBorderColor = Color(0xFF6F7778),
+        cursorColor = Lime
+    )
 
-            focusedTextColor = White,
-
-            unfocusedTextColor = White,
-
-            disabledTextColor = White,
-
-            focusedLabelColor = Lime,
-
-            unfocusedLabelColor =
-                SecondaryText,
-
-            disabledLabelColor =
-                SecondaryText,
-
-            focusedBorderColor = Lime,
-
-            unfocusedBorderColor =
-                Color(0xFF6F7778),
-
-            disabledBorderColor =
-                Color(0xFF6F7778),
-
-            cursorColor = Lime
-        )
-
-
-/* =========================================================
-   INSPECTION RECORDS
-   ========================================================= */
-
-@Composable
-fun RecordsScreen(
-    records: List<HygieneRecord>,
-    onBack: () -> Unit,
-    onDelete: (HygieneRecord) -> Unit
+fun showDatePicker(
+    context: Context,
+    onDateSelected: (String) -> Unit
 ) {
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .navigationBarsPadding()
-    ) {
+    val calendar = Calendar.getInstance()
 
-        Column(
-            modifier = Modifier.padding(
-                horizontal = 20.dp
-            )
-        ) {
+    DatePickerDialog(
+        context,
+        { _, year, month, day ->
 
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
-
-            Text(
-                text = "← Back",
-                color = Lime,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable {
-                    onBack()
-                }
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(22.dp)
-            )
-
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement =
-                    Arrangement.SpaceBetween,
-                verticalAlignment =
-                    Alignment.CenterVertically
-            ) {
-
-                Column {
-
-                    Text(
-                        text = "Inspection Records",
-                        color = White,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Text(
-                        text = "Hygiene check history",
-                        color = SecondaryText,
-                        fontSize = 17.sp
-                    )
-                }
-
-
-                Text(
-                    text =
-                        "${records.size} Records",
-                    color = SecondaryText
+            onDateSelected(
+                String.format(
+                    "%02d/%02d/%04d",
+                    day,
+                    month + 1,
+                    year
                 )
+            )
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    ).show()
+}
+
+fun showTimePicker(
+    context: Context,
+    onTimeSelected: (String) -> Unit
+) {
+
+    val calendar = Calendar.getInstance()
+
+    TimePickerDialog(
+        context,
+        { _, hour, minute ->
+
+            onTimeSelected(
+                String.format(
+                    "%02d:%02d",
+                    hour,
+                    minute
+                )
+            )
+        },
+        calendar.get(Calendar.HOUR_OF_DAY),
+        calendar.get(Calendar.MINUTE),
+        true
+    ).show()
+}
+
+fun calculateScore(
+    records: List<AuditRecord>
+): Double? {
+
+    if (records.isEmpty()) return null
+
+    val categories = listOf(
+        "Hygiene" to 0.25,
+        "Temperature" to 0.25,
+        "Cleaning" to 0.15,
+        "Corrective" to 0.15,
+        "Staff" to 0.10
+    )
+
+    var total = 0.0
+    var weight = 0.0
+
+    for ((category, categoryWeight) in categories) {
+
+        val categoryRecords =
+            records.filter {
+                it.type == category
             }
 
+        if (categoryRecords.isNotEmpty()) {
 
-            Spacer(
-                modifier = Modifier.height(15.dp)
+            val passed =
+                categoryRecords.count {
+                    it.status == "PASS" ||
+                    it.status == "CLOSED"
+                }
+
+            val categoryScore =
+                passed.toDouble() /
+                    categoryRecords.size.toDouble() *
+                    10.0
+
+            total += categoryScore * categoryWeight
+            weight += categoryWeight
+        }
+    }
+
+    if (weight == 0.0) return null
+
+    val completeness =
+        if (records.size >= 10) 10.0
+        else records.size.toDouble()
+
+    total += completeness * 0.10
+    weight += 0.10
+
+    return round(
+        (total / weight) * 10.0
+    ) / 10.0
+}
+
+fun categoryScore(
+    records: List<AuditRecord>,
+    category: String
+): Double? {
+
+    val list =
+        records.filter {
+            it.type == category
+        }
+
+    if (list.isEmpty()) return null
+
+    val passed =
+        list.count {
+            it.status == "PASS" ||
+            it.status == "CLOSED"
+        }
+
+    return round(
+        passed.toDouble() /
+            list.size.toDouble() *
+            100.0
+    ) / 10.0
+}
+
+fun formatScore(
+    score: Double
+): String {
+    return String.format(
+        "%.1f",
+        score
+    )
+}
+
+fun scoreDescription(
+    score: Double
+): String {
+
+    return when {
+        score >= 9.0 -> "Excellent food safety performance"
+        score >= 8.0 -> "Very good performance"
+        score >= 7.0 -> "Good performance"
+        score >= 6.0 -> "Needs improvement"
+        else -> "Immediate attention required"
+    }
+}
+
+fun saveRecords(
+    context: Context,
+    records: List<AuditRecord>
+) {
+
+    val array = JSONArray()
+
+    records.forEach {
+
+        val obj = JSONObject()
+
+        obj.put("id", it.id)
+        obj.put("type", it.type)
+        obj.put("date", it.date)
+        obj.put("time", it.time)
+        obj.put("subject", it.subject)
+        obj.put("value", it.value)
+        obj.put("status", it.status)
+        obj.put("staff", it.staff)
+        obj.put("notes", it.notes)
+
+        array.put(obj)
+    }
+
+    context.getSharedPreferences(
+        "audit_records",
+        Context.MODE_PRIVATE
+    )
+        .edit()
+        .putString(
+            "records",
+            array.toString()
+        )
+        .apply()
+}
+
+fun loadRecords(
+    context: Context
+): List<AuditRecord> {
+
+    val json =
+        context.getSharedPreferences(
+            "audit_records",
+            Context.MODE_PRIVATE
+        )
+            .getString(
+                "records",
+                null
+            )
+            ?: return emptyList()
+
+    return try {
+
+        val array = JSONArray(json)
+
+        val result =
+            mutableListOf<AuditRecord>()
+
+        for (i in 0 until array.length()) {
+
+            val obj =
+                array.getJSONObject(i)
+
+            result.add(
+                AuditRecord(
+                    obj.optLong("id"),
+                    obj.optString("type"),
+                    obj.optString("date"),
+                    obj.optString("time"),
+                    obj.optString("subject"),
+                    obj.optString("value"),
+                    obj.optString("status"),
+                    obj.optString("staff"),
+                    obj.optString("notes")
+                )
             )
         }
 
+        result
 
-        if (records.isEmpty()) {
+    } catch (
+        e: Exception
+    ) {
+        emptyList()
+    }
+}
 
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment =
-                    Alignment.Center
-            ) {
+fun generatePdfReport(
+    context: Context,
+    records: List<AuditRecord>,
+    startDate: String,
+    endDate: String,
+    score: Double?
+) {
 
-                Text(
-                    text = "No records yet",
-                    color = SecondaryText,
-                    fontSize = 18.sp
+    val pdf =
+        PdfDocument()
+
+    val pageInfo =
+        PdfDocument.PageInfo.Builder(
+            595,
+            842,
+            1
+        ).create()
+
+    val page =
+        pdf.startPage(pageInfo)
+
+    val canvas =
+        page.canvas
+
+    val paint =
+        Paint()
+
+    paint.textSize = 24f
+    paint.isFakeBoldText = true
+
+    canvas.drawText(
+        "FOOD SAFETY INSPECTION REPORT",
+        35f,
+        50f,
+        paint
+    )
+
+    paint.textSize = 13f
+    paint.isFakeBoldText = false
+
+    var y = 80f
+
+    val restaurant =
+        loadRestaurant(context)
+
+    canvas.drawText(
+        "Restaurant: ${restaurant.name}",
+        35f,
+        y,
+        paint
+    )
+
+    y += 20f
+
+    canvas.drawText(
+        "Address: ${restaurant.address}",
+        35f,
+        y,
+        paint
+    )
+
+    y += 20f
+
+    canvas.drawText(
+        "Manager: ${restaurant.manager}",
+        35f,
+        y,
+        paint
+    )
+
+    y += 30f
+
+    paint.isFakeBoldText = true
+    paint.textSize = 18f
+
+    canvas.drawText(
+        "Food Safety Score: ${
+            if (score == null)
+                "N/A"
+            else
+                "${formatScore(score)} / 10"
+        }",
+        35f,
+        y,
+        paint
+    )
+
+    y += 30f
+
+    paint.isFakeBoldText = false
+    paint.textSize = 12f
+
+    canvas.drawText(
+        "Inspection period: $startDate - $endDate",
+        35f,
+        y,
+        paint
+    )
+
+    y += 30f
+
+    canvas.drawText(
+        "Total records: ${records.size}",
+        35f,
+        y,
+        paint
+    )
+
+    y += 30f
+
+    for (record in records.take(28)) {
+
+        val line =
+            "${record.type} | ${record.date} ${record.time} | " +
+                    "${record.subject} | ${record.status}"
+
+        canvas.drawText(
+            line.take(85),
+            35f,
+            y,
+            paint
+        )
+
+        y += 20f
+
+        if (y > 790f) break
+    }
+
+    pdf.finishPage(page)
+
+    val filename =
+        "Hygiene_Report_${System.currentTimeMillis()}.pdf"
+
+    try {
+
+        if (Build.VERSION.SDK_INT >=
+            Build.VERSION_CODES.Q
+        ) {
+
+            val values =
+                ContentValues().apply {
+
+                    put(
+                        MediaStore.Downloads.DISPLAY_NAME,
+                        filename
+                    )
+
+                    put(
+                        MediaStore.Downloads.MIME_TYPE,
+                        "application/pdf"
+                    )
+
+                    put(
+                        MediaStore.Downloads.RELATIVE_PATH,
+                        Environment.DIRECTORY_DOWNLOADS
+                    )
+                }
+
+            val uri =
+                context.contentResolver.insert(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    values
                 )
+
+            if (uri != null) {
+
+                context.contentResolver
+                    .openOutputStream(uri)
+                    ?.use {
+                        pdf.writeTo(it)
+                    }
+
+                Toast.makeText(
+                    context,
+                    "PDF saved to Downloads",
+                    Toast.LENGTH_LONG
+                ).show()
             }
 
         } else {
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 20.dp)
-            ) {
+            val file =
+                java.io.File(
+                    context.getExternalFilesDir(
+                        Environment.DIRECTORY_DOCUMENTS
+                    ),
+                    filename
+                )
 
-                items(
-                    items = records,
-                    key = {
-                        it.id
-                    }
-                ) { record ->
-
-                    RecordCard(
-                        record = record,
-                        onDelete = {
-                            onDelete(record)
-                        }
-                    )
-                }
+            file.outputStream().use {
+                pdf.writeTo(it)
             }
+
+            Toast.makeText(
+                context,
+                "PDF report created",
+                Toast.LENGTH_LONG
+            ).show()
         }
+
+    } catch (e: Exception) {
+
+        Toast.makeText(
+            context,
+            "PDF error: ${e.message}",
+            Toast.LENGTH_LONG
+        ).show()
     }
+
+    pdf.close()
 }
 
-
-/* =========================================================
-   HYGIENE RECORD CARD
-   ========================================================= */
-
-@Composable
-fun RecordCard(
-    record: HygieneRecord,
-    onDelete: () -> Unit
-) {
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 7.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = CardColor
-        ),
-        shape = RoundedCornerShape(22.dp)
-    ) {
-
-        Column(
-            modifier = Modifier.padding(28.dp)
-        ) {
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement =
-                    Arrangement.SpaceBetween,
-                verticalAlignment =
-                    Alignment.CenterVertically
-            ) {
-
-                Text(
-                    text = record.item,
-                    color = White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
-
-
-                Text(
-                    text = record.status,
-                    color =
-                        if (record.status == "PASS")
-                            Color.Black
-                        else
-                            White,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .background(
-                            if (record.status == "PASS")
-                                Lime
-                            else
-                                Danger,
-                            RoundedCornerShape(12.dp)
-                        )
-                        .padding(
-                            horizontal = 16.dp,
-                            vertical = 8.dp
-                        )
-                )
-            }
-
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-
-            Text(
-                text =
-                    "${record.date} • ${record.time}",
-                color = SecondaryText,
-                fontSize = 15.sp
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(18.dp)
-            )
-
-
-            Text(
-                text =
-                    "Check Area: ${record.area}",
-                color = SecondaryText,
-                fontSize = 16.sp
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(7.dp)
-            )
-
-
-            Text(
-                text =
-                    "Staff Member: ${record.staff}",
-                color = SecondaryText,
-                fontSize = 16.sp
-            )
-
-
-            if (record.notes.isNotBlank()) {
-
-                Spacer(
-                    modifier = Modifier.height(14.dp)
-                )
-
-
-                Text(
-                    text = "Notes",
-                    color = SecondaryText,
-                    fontSize = 15.sp
-                )
-
-
-                Text(
-                    text = record.notes,
-                    color = White,
-                    fontSize = 16.sp
-                )
-            }
-
-
-            Spacer(
-                modifier = Modifier.height(18.dp)
-            )
-
-
-            TextButton(
-                onClick = onDelete
-            ) {
-
-                Text(
-                    text = "Delete record",
-                    color = Danger,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
-
-
-/* =========================================================
-   RESTAURANT SETTINGS
-   ========================================================= */
-
-@Composable
-fun RestaurantSettingsScreen(
-    onBack: () -> Unit
-) {
-
-    var restaurantName by remember {
-        mutableStateOf("")
-    }
-
-    var address by remember {
-        mutableStateOf("")
-    }
-
-    var phone by remember {
-        mutableStateOf("")
-    }
-
-    var email by remember {
-        mutableStateOf("")
-    }
-
-    var manager by remember {
-        mutableStateOf("")
-    }
-
-
-    val context = LocalContext.current
-
-
-    LaunchedEffect(Unit) {
-
-        val preferences =
-            context.getSharedPreferences(
-                "restaurant_settings",
-                Context.MODE_PRIVATE
-            )
-
-
-        restaurantName =
-            preferences.getString(
-                "name",
-                ""
-            ) ?: ""
-
-
-        address =
-            preferences.getString(
-                "address",
-                ""
-            ) ?: ""
-
-
-        phone =
-            preferences.getString(
-                "phone",
-                ""
-            ) ?: ""
-
-
-        email =
-            preferences.getString(
-                "email",
-                ""
-            ) ?: ""
-
-
-        manager =
-            preferences.getString(
-                "manager",
-                ""
-            ) ?: ""
-    }
-
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .imePadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 20.dp)
-    ) {
-
-        item {
-
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
-
-            Text(
-                text = "← Back",
-                color = Lime,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable {
-                    onBack()
-                }
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(22.dp)
-            )
-
-
-            Text(
-                text = "Restaurant Settings",
-                color = White,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(25.dp)
-            )
-
-
-            WhiteTextField(
-                value = restaurantName,
-                onValueChange = {
-                    restaurantName = it
-                },
-                label = "Restaurant Name"
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
-            WhiteTextField(
-                value = address,
-                onValueChange = {
-                    address = it
-                },
-                label = "Address"
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
-            WhiteTextField(
-                value = phone,
-                onValueChange = {
-                    phone = it
-                },
-                label = "Phone"
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
-            WhiteTextField(
-                value = email,
-                onValueChange = {
-                    email = it
-                },
-                label = "Email"
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
-            WhiteTextField(
-                value = manager,
-                onValueChange = {
-                    manager = it
-                },
-                label = "Manager / Owner"
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(25.dp)
-            )
-
-
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(58.dp),
-                onClick = {
-
-                    context.getSharedPreferences(
-                        "restaurant_settings",
-                        Context.MODE_PRIVATE
-                    )
-                        .edit()
-                        .putString(
-                            "name",
-                            restaurantName
-                        )
-                        .putString(
-                            "address",
-                            address
-                        )
-                        .putString(
-                            "phone",
-                            phone
-                        )
-                        .putString(
-                            "email",
-                            email
-                        )
-                        .putString(
-                            "manager",
-                            manager
-                        )
-                        .apply()
-
-
-                    onBack()
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Lime,
-                    contentColor = Color.Black
-                ),
-                shape = RoundedCornerShape(30.dp)
-            ) {
-
-                Text(
-                    text =
-                        "Save Restaurant Information",
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-
-            Spacer(
-                modifier = Modifier.height(35.dp)
-            )
-        }
-    }
-}
-
-
-/* =========================================================
-   SIMPLE SCREEN
-   ========================================================= */
-
-@Composable
-fun SimpleScreen(
-    title: String,
-    subtitle: String,
-    onBack: () -> Unit
-) {
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp)
-            .navigationBarsPadding()
-    ) {
-
-        Spacer(
-            modifier = Modifier.height(12.dp)
-        )
-
-
-        Text(
-            text = "← Back",
-            color = Lime,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable {
-                onBack()
-            }
-        )
-
-
-        Spacer(
-            modifier = Modifier.height(25.dp)
-        )
-
-
-        Text(
-            text = title,
-            color = White,
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
-
-
-        Text(
-            text = subtitle,
-            color = SecondaryText,
-            fontSize = 17.sp
-        )
-
-
-        Spacer(
-            modifier = Modifier.height(35.dp)
-        )
-
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = CardColor
-            ),
-            shape = RoundedCornerShape(20.dp)
-        ) {
-
-            Text(
-                text =
-                    "This section is ready for the next step.",
-                color = White,
-                fontSize = 17.sp,
-                modifier = Modifier.padding(25.dp)
-            )
-        }
-    }
-}
-
-
-/* =========================================================
-   SAVE HYGIENE RECORDS
-   ========================================================= */
-
-fun saveRecords(
-    context: Context,
-    records: List<HygieneRecord>
-) {
-
-    val array = JSONArray()
-
-
-    records.forEach { record ->
-
-        val objectRecord =
-            JSONObject()
-
-        objectRecord.put(
-            "id",
-            record.id
-        )
-
-        objectRecord.put(
-            "date",
-            record.date
-        )
-
-        objectRecord.put(
-            "time",
-            record.time
-        )
-
-        objectRecord.put(
-            "area",
-            record.area
-        )
-
-        objectRecord.put(
-            "item",
-            record.item
-        )
-
-        objectRecord.put(
-            "status",
-            record.status
-        )
-
-        objectRecord.put(
-            "staff",
-            record.staff
-        )
-
-        objectRecord.put(
-            "notes",
-            record.notes
-        )
-
-
-        array.put(objectRecord)
-    }
-
-
-    context.getSharedPreferences(
-        "hygiene_records",
-        Context.MODE_PRIVATE
-    )
-        .edit()
-        .putString(
-            "records",
-            array.toString()
-        )
-        .apply()
-}
-
-
-/* =========================================================
-   LOAD HYGIENE RECORDS
-   ========================================================= */
-
-fun loadRecords(
+fun loadRestaurant(
     context: Context
-): List<HygieneRecord> {
+): RestaurantInfo {
 
-    val preferences =
+    val p =
         context.getSharedPreferences(
-            "hygiene_records",
+            "restaurant",
             Context.MODE_PRIVATE
         )
 
-
-    val json =
-        preferences.getString(
-            "records",
-            null
-        ) ?: return emptyList()
-
-
-    return try {
-
-        val array =
-            JSONArray(json)
-
-        val result =
-            mutableListOf<HygieneRecord>()
-
-
-        for (i in 0 until array.length()) {
-
-            val item =
-                array.getJSONObject(i)
-
-
-            result.add(
-                HygieneRecord(
-                    id = item.optLong("id"),
-                    date =
-                        item.optString("date"),
-                    time =
-                        item.optString("time"),
-                    area =
-                        item.optString("area"),
-                    item =
-                        item.optString("item"),
-                    status =
-                        item.optString("status"),
-                    staff =
-                        item.optString("staff"),
-                    notes =
-                        item.optString("notes")
-                )
-            )
-        }
-
-
-        result
-
-    } catch (
-        e: Exception
-    ) {
-
-        emptyList()
-    }
-}
-
-
-/* =========================================================
-   SAVE TEMPERATURE RECORDS
-   ========================================================= */
-
-fun saveTemperatureRecords(
-    context: Context,
-    records: List<TemperatureRecord>
-) {
-
-    val array = JSONArray()
-
-
-    records.forEach { record ->
-
-        val objectRecord =
-            JSONObject()
-
-
-        objectRecord.put(
-            "id",
-            record.id
-        )
-
-        objectRecord.put(
-            "date",
-            record.date
-        )
-
-        objectRecord.put(
-            "time",
-            record.time
-        )
-
-        objectRecord.put(
-            "equipment",
-            record.equipment
-        )
-
-        objectRecord.put(
-            "temperature",
-            record.temperature
-        )
-
-        objectRecord.put(
-            "status",
-            record.status
-        )
-
-        objectRecord.put(
-            "staff",
-            record.staff
-        )
-
-        objectRecord.put(
-            "notes",
-            record.notes
-        )
-
-
-        array.put(objectRecord)
-    }
-
-
-    context.getSharedPreferences(
-        "temperature_records",
-        Context.MODE_PRIVATE
+    return RestaurantInfo(
+        p.getString("name", "") ?: "",
+        p.getString("address", "") ?: "",
+        p.getString("phone", "") ?: "",
+        p.getString("email", "") ?: "",
+        p.getString("manager", "") ?: ""
     )
-        .edit()
-        .putString(
-            "records",
-            array.toString()
-        )
-        .apply()
-}
-
-
-/* =========================================================
-   LOAD TEMPERATURE RECORDS
-   ========================================================= */
-
-fun loadTemperatureRecords(
-    context: Context
-): List<TemperatureRecord> {
-
-    val preferences =
-        context.getSharedPreferences(
-            "temperature_records",
-            Context.MODE_PRIVATE
-        )
-
-
-    val json =
-        preferences.getString(
-            "records",
-            null
-        ) ?: return emptyList()
-
-
-    return try {
-
-        val array =
-            JSONArray(json)
-
-        val result =
-            mutableListOf<TemperatureRecord>()
-
-
-        for (i in 0 until array.length()) {
-
-            val item =
-                array.getJSONObject(i)
-
-
-            result.add(
-                TemperatureRecord(
-
-                    id =
-                        item.optLong("id"),
-
-                    date =
-                        item.optString("date"),
-
-                    time =
-                        item.optString("time"),
-
-                    equipment =
-                        item.optString("equipment"),
-
-                    temperature =
-                        item.optString("temperature"),
-
-                    status =
-                        item.optString("status"),
-
-                    staff =
-                        item.optString("staff"),
-
-                    notes =
-                        item.optString("notes")
-                )
-            )
-        }
-
-
-        result
-
-    } catch (
-        e: Exception
-    ) {
-
-        emptyList()
-    }
 }
