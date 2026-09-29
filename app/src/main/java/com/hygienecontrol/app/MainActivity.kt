@@ -6,19 +6,45 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.OnBackPressedCallback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,2859 +52,1248 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
 
-
-class MainActivity : ComponentActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setContent {
-            HygieneControlApp(this)
-        }
-    }
-}
-
-
-/* =========================================================
-   COLORS
-   ========================================================= */
-
-val AppBackground = Color(0xFF101414)
-val AppCard = Color(0xFF1A2020)
-val AppGreen = Color(0xFFB7D52B)
-val AppWhite = Color(0xFFF5F5F5)
-val AppGrey = Color(0xFF9AA3A3)
-
-
-/* =========================================================
-   APP NAVIGATION
-   ========================================================= */
-
-@Composable
-fun HygieneControlApp(context: Context) {
-
-    var currentScreen by remember {
-        mutableStateOf("home")
-    }
-
-    when (currentScreen) {
-
-        "home" -> {
-
-            ProfessionalDashboard(
-                onHygieneClick = {
-                    currentScreen = "hygiene"
-                },
-
-                onTemperatureClick = {
-                    currentScreen = "temperature"
-                },
-
-                onRecordsClick = {
-                    currentScreen = "records"
-                },
-
-                onSettingsClick = {
-                    currentScreen = "settings"
-                }
-            )
-        }
-
-        "hygiene" -> {
-
-            HygieneChecks(
-                context = context,
-                onBack = {
-                    currentScreen = "home"
-                }
-            )
-        }
-
-        "temperature" -> {
-
-            TemperatureChecks(
-                context = context,
-                onBack = {
-                    currentScreen = "home"
-                }
-            )
-        }
-
-        "records" -> {
-
-            RecordsScreen(
-                context = context,
-                onBack = {
-                    currentScreen = "home"
-                }
-            )
-        }
-
-        "settings" -> {
-
-            RestaurantSettings(
-                context = context,
-                onBack = {
-                    currentScreen = "home"
-                }
-            )
-        }
-    }
-}
-
-
-/* =========================================================
-   DASHBOARD
-   ========================================================= */
-
-@Composable
-fun ProfessionalDashboard(
-    onHygieneClick: () -> Unit,
-    onTemperatureClick: () -> Unit,
-    onRecordsClick: () -> Unit,
-    onSettingsClick: () -> Unit
-) {
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = AppBackground
-    ) {
-
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(20.dp)
-            ) {
-
-                Text(
-                    text = "HYGIENE CONTROL",
-                    color = AppGreen,
-                    fontSize = 27.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(
-                    modifier = Modifier.height(4.dp)
-                )
-
-                Text(
-                    text = "Restaurant Food Safety Management",
-                    color = AppGrey,
-                    fontSize = 14.sp
-                )
-
-                Spacer(
-                    modifier = Modifier.height(24.dp)
-                )
-
-                Text(
-                    text = "Today's Overview",
-                    color = AppWhite,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(
-                    modifier = Modifier.height(12.dp)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement =
-                        Arrangement.spacedBy(10.dp)
-                ) {
-
-                    StatusCard(
-                        modifier = Modifier.weight(1f),
-                        number = "0",
-                        title = "Completed",
-                        color = AppGreen
-                    )
-
-                    StatusCard(
-                        modifier = Modifier.weight(1f),
-                        number = "0",
-                        title = "Pending",
-                        color = Color(0xFFFFB74D)
-                    )
-
-                    StatusCard(
-                        modifier = Modifier.weight(1f),
-                        number = "0",
-                        title = "Issues",
-                        color = Color(0xFFE57373)
-                    )
-                }
-
-                Spacer(
-                    modifier = Modifier.height(26.dp)
-                )
-
-                SectionTitle(
-                    title = "Daily Checks",
-                    color = AppGreen
-                )
-
-                DashboardActionCard(
-                    title = "Hygiene Checks",
-                    subtitle =
-                        "Daily food safety and hygiene controls",
-                    onClick = onHygieneClick
-                )
-
-                DashboardActionCard(
-                    title = "Temperature Checks",
-                    subtitle =
-                        "Fridge, freezer and food temperatures",
-                    onClick = onTemperatureClick
-                )
-
-                DashboardActionCard(
-                    title = "Cleaning Checks",
-                    subtitle =
-                        "Cleaning tasks and completion records"
-                )
-
-                Spacer(
-                    modifier = Modifier.height(22.dp)
-                )
-
-                SectionTitle(
-                    title = "Compliance",
-                    color = AppGreen
-                )
-
-                DashboardActionCard(
-                    title = "Inspection Records",
-                    subtitle =
-                        "View and manage inspection history",
-                    onClick = onRecordsClick
-                )
-
-                DashboardActionCard(
-                    title = "Corrective Actions",
-                    subtitle =
-                        "Record problems and corrective measures"
-                )
-
-                DashboardActionCard(
-                    title = "Staff Checks",
-                    subtitle =
-                        "Staff hygiene and training records"
-                )
-
-                Spacer(
-                    modifier = Modifier.height(22.dp)
-                )
-
-                SectionTitle(
-                    title = "Reports",
-                    color = AppGreen
-                )
-
-                DashboardActionCard(
-                    title = "Inspection Report",
-                    subtitle =
-                        "Prepare a complete inspection report"
-                )
-
-                DashboardActionCard(
-                    title = "PDF Reports",
-                    subtitle =
-                        "Generate and export professional reports"
-                )
-
-                Spacer(
-                    modifier = Modifier.height(22.dp)
-                )
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            onSettingsClick()
-                        },
-
-                    shape =
-                        RoundedCornerShape(15.dp),
-
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor =
-                                Color(0xFF202727)
-                        )
-                ) {
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(17.dp),
-
-                        verticalAlignment =
-                            Alignment.CenterVertically
-                    ) {
-
-                        Column(
-                            modifier =
-                                Modifier.weight(1f)
-                        ) {
-
-                            Text(
-                                text =
-                                    "Restaurant Settings",
-                                color =
-                                    AppWhite,
-                                fontSize = 16.sp,
-                                fontWeight =
-                                    FontWeight.Bold
-                            )
-
-                            Spacer(
-                                modifier =
-                                    Modifier.height(4.dp)
-                            )
-
-                            Text(
-                                text =
-                                    "Restaurant information",
-                                color =
-                                    AppGrey,
-                                fontSize = 12.sp
-                            )
-                        }
-
-                        Text(
-                            text = "›",
-                            color = AppGreen,
-                            fontSize = 28.sp
-                        )
-                    }
-                }
-
-                Spacer(
-                    modifier = Modifier.height(20.dp)
-                )
-            }
-
-            BottomNavigation(
-                onRecordsClick =
-                    onRecordsClick,
-
-                onSettingsClick =
-                    onSettingsClick
-            )
-        }
-    }
-}
-
-
-/* =========================================================
-   HYGIENE CHECK
-   ========================================================= */
-
-@Composable
-fun HygieneChecks(
-    context: Context,
-    onBack: () -> Unit
-) {
-
-    var recordDate by remember {
-        mutableStateOf("")
-    }
-
-    var time by remember {
-        mutableStateOf("")
-    }
-
-    var area by remember {
-        mutableStateOf("")
-    }
-
-    var hygieneItem by remember {
-        mutableStateOf("")
-    }
-
-    var staff by remember {
-        mutableStateOf("")
-    }
-
-    var notes by remember {
-        mutableStateOf("")
-    }
-
-    var status by remember {
-        mutableStateOf("Pass")
-    }
-
-    var saved by remember {
-        mutableStateOf(false)
-    }
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = AppBackground
-    ) {
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(
-                    rememberScrollState()
-                )
-                .imePadding()
-                .navigationBarsPadding()
-                .padding(20.dp)
-        ) {
-
-            TextButton(
-                onClick = onBack
-            ) {
-
-                Text(
-                    text = "← Back",
-                    color = AppGreen,
-                    fontSize = 16.sp
-                )
-            }
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-            Text(
-                text = "Hygiene Check",
-                color = AppWhite,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text =
-                    "Record a food safety and hygiene check",
-                color = AppGrey,
-                fontSize = 14.sp
-            )
-
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
-
-
-            /* DATE */
-
-            DateSelector(
-                context = context,
-                value = recordDate,
-                label = "Record Date",
-                onDateSelected = {
-                    recordDate = it
-                    saved = false
-                }
-            )
-
-
-            /* TIME */
-
-            TimeSelector(
-                context = context,
-                value = time,
-                label = "Time",
-                onTimeSelected = {
-                    time = it
-                    saved = false
-                }
-            )
-
-
-            HygieneField(
-                value = area,
-                label = "Check Area",
-                placeholder =
-                    "e.g. Kitchen, Storage, Bar",
-                onValueChange = {
-                    area = it
-                    saved = false
-                }
-            )
-
-            HygieneField(
-                value = hygieneItem,
-                label = "Hygiene Item",
-                placeholder =
-                    "e.g. Hand washing station",
-                onValueChange = {
-                    hygieneItem = it
-                    saved = false
-                }
-            )
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-            StatusSelector(
-                status = status,
-                onStatusChanged = {
-                    status = it
-                    saved = false
-                }
-            )
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-            HygieneField(
-                value = staff,
-                label = "Staff Member",
-                placeholder =
-                    "Enter staff name",
-                onValueChange = {
-                    staff = it
-                    saved = false
-                }
-            )
-
-            NotesField(
-                value = notes,
-                onValueChange = {
-                    notes = it
-                    saved = false
-                }
-            )
-
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
-
-            Button(
-                onClick = {
-
-                    saveHygieneRecord(
-                        context = context,
-                        date = recordDate,
-                        time = time,
-                        area = area,
-                        item = hygieneItem,
-                        status = status,
-                        staff = staff,
-                        notes = notes
-                    )
-
-                    saved = true
-
-                    recordDate = ""
-                    time = ""
-                    area = ""
-                    hygieneItem = ""
-                    staff = ""
-                    notes = ""
-                    status = "Pass"
-                },
-
-                modifier =
-                    Modifier.fillMaxWidth(),
-
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor =
-                            AppGreen,
-                        contentColor =
-                            Color.Black
-                    )
-            ) {
-
-                Text(
-                    text =
-                        "Save Hygiene Check",
-                    fontWeight =
-                        FontWeight.Bold
-                )
-            }
-
-            if (saved) {
-
-                Spacer(
-                    modifier =
-                        Modifier.height(12.dp)
-                )
-
-                Text(
-                    text =
-                        "Hygiene check saved successfully.",
-                    color =
-                        AppGreen,
-                    fontWeight =
-                        FontWeight.Bold
-                )
-            }
-
-            Spacer(
-                modifier =
-                    Modifier.height(30.dp)
-            )
-        }
-    }
-}
-
-
-/* =========================================================
-   TEMPERATURE CHECK
-   ========================================================= */
-
-@Composable
-fun TemperatureChecks(
-    context: Context,
-    onBack: () -> Unit
-) {
-
-    var recordDate by remember {
-        mutableStateOf("")
-    }
-
-    var time by remember {
-        mutableStateOf("")
-    }
-
-    var equipment by remember {
-        mutableStateOf("")
-    }
-
-    var temperature by remember {
-        mutableStateOf("")
-    }
-
-    var staff by remember {
-        mutableStateOf("")
-    }
-
-    var notes by remember {
-        mutableStateOf("")
-    }
-
-    var status by remember {
-        mutableStateOf("Pass")
-    }
-
-    var saved by remember {
-        mutableStateOf(false)
-    }
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = AppBackground
-    ) {
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(
-                    rememberScrollState()
-                )
-                .imePadding()
-                .navigationBarsPadding()
-                .padding(20.dp)
-        ) {
-
-            TextButton(
-                onClick = onBack
-            ) {
-
-                Text(
-                    text = "← Back",
-                    color = AppGreen,
-                    fontSize = 16.sp
-                )
-            }
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-            Text(
-                text = "Temperature Check",
-                color = AppWhite,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text =
-                    "Record fridge, freezer and food temperatures",
-                color = AppGrey,
-                fontSize = 14.sp
-            )
-
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
-
-
-            /* DATE */
-
-            DateSelector(
-                context = context,
-                value = recordDate,
-                label = "Record Date",
-                onDateSelected = {
-                    recordDate = it
-                    saved = false
-                }
-            )
-
-
-            /* TIME */
-
-            TimeSelector(
-                context = context,
-                value = time,
-                label = "Time",
-                onTimeSelected = {
-                    time = it
-                    saved = false
-                }
-            )
-
-
-            /* EQUIPMENT */
-
-            HygieneField(
-                value = equipment,
-                label = "Equipment",
-                placeholder =
-                    "e.g. Main Fridge, Freezer 1",
-                onValueChange = {
-                    equipment = it
-                    saved = false
-                }
-            )
-
-
-            /* TEMPERATURE */
-
-            HygieneField(
-                value = temperature,
-                label = "Temperature °C",
-                placeholder =
-                    "e.g. 4.2",
-                onValueChange = {
-                    temperature = it
-                    saved = false
-                }
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-
-            /* STATUS */
-
-            StatusSelector(
-                status = status,
-                onStatusChanged = {
-                    status = it
-                    saved = false
-                }
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
-            /* STAFF */
-
-            HygieneField(
-                value = staff,
-                label = "Staff Member",
-                placeholder =
-                    "Enter staff name",
-                onValueChange = {
-                    staff = it
-                    saved = false
-                }
-            )
-
-
-            /* NOTES */
-
-            NotesField(
-                value = notes,
-                onValueChange = {
-                    notes = it
-                    saved = false
-                }
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
-
-
-            /* SAVE */
-
-            Button(
-                onClick = {
-
-                    saveTemperatureRecord(
-                        context = context,
-                        date = recordDate,
-                        time = time,
-                        equipment = equipment,
-                        temperature = temperature,
-                        status = status,
-                        staff = staff,
-                        notes = notes
-                    )
-
-                    saved = true
-
-                    recordDate = ""
-                    time = ""
-                    equipment = ""
-                    temperature = ""
-                    staff = ""
-                    notes = ""
-                    status = "Pass"
-                },
-
-                modifier =
-                    Modifier.fillMaxWidth(),
-
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor =
-                            AppGreen,
-                        contentColor =
-                            Color.Black
-                    )
-            ) {
-
-                Text(
-                    text =
-                        "Save Temperature Check",
-                    fontWeight =
-                        FontWeight.Bold
-                )
-            }
-
-
-            if (saved) {
-
-                Spacer(
-                    modifier =
-                        Modifier.height(12.dp)
-                )
-
-                Text(
-                    text =
-                        "Temperature check saved successfully.",
-                    color =
-                        AppGreen,
-                    fontWeight =
-                        FontWeight.Bold
-                )
-            }
-
-            Spacer(
-                modifier =
-                    Modifier.height(30.dp)
-            )
-        }
-    }
-}
-
-
-/* =========================================================
-   DATE SELECTOR
-   ========================================================= */
-
-@Composable
-fun DateSelector(
-    context: Context,
-    value: String,
-    label: String,
-    onDateSelected: (String) -> Unit
-) {
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 14.dp)
-            .clickable {
-
-                val calendar =
-                    Calendar.getInstance()
-
-                DatePickerDialog(
-                    context,
-                    { _, year, month, day ->
-
-                        val result =
-                            "%02d/%02d/%04d".format(
-                                day,
-                                month + 1,
-                                year
-                            )
-
-                        onDateSelected(result)
-                    },
-
-                    calendar.get(
-                        Calendar.YEAR
-                    ),
-
-                    calendar.get(
-                        Calendar.MONTH
-                    ),
-
-                    calendar.get(
-                        Calendar.DAY_OF_MONTH
-                    )
-                ).show()
-            }
-    ) {
-
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            readOnly = true,
-            enabled = false,
-
-            label = {
-                Text(label)
-            },
-
-            placeholder = {
-                Text("Select date")
-            },
-
-            modifier =
-                Modifier.fillMaxWidth(),
-
-            colors =
-                OutlinedTextFieldDefaults.colors(
-
-                    disabledTextColor =
-                        Color.White,
-
-                    disabledLabelColor =
-                        AppGreen,
-
-                    disabledPlaceholderColor =
-                        AppGrey,
-
-                    disabledBorderColor =
-                        Color(0xFF777777)
-                )
-        )
-    }
-}
-
-
-/* =========================================================
-   TIME SELECTOR
-   ========================================================= */
-
-@Composable
-fun TimeSelector(
-    context: Context,
-    value: String,
-    label: String,
-    onTimeSelected: (String) -> Unit
-) {
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 14.dp)
-            .clickable {
-
-                val calendar =
-                    Calendar.getInstance()
-
-                TimePickerDialog(
-                    context,
-
-                    { _, hour, minute ->
-
-                        val result =
-                            "%02d:%02d".format(
-                                hour,
-                                minute
-                            )
-
-                        onTimeSelected(result)
-                    },
-
-                    calendar.get(
-                        Calendar.HOUR_OF_DAY
-                    ),
-
-                    calendar.get(
-                        Calendar.MINUTE
-                    ),
-
-                    true
-                ).show()
-            }
-    ) {
-
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            readOnly = true,
-            enabled = false,
-
-            label = {
-                Text(label)
-            },
-
-            placeholder = {
-                Text("Select time")
-            },
-
-            modifier =
-                Modifier.fillMaxWidth(),
-
-            colors =
-                OutlinedTextFieldDefaults.colors(
-
-                    disabledTextColor =
-                        Color.White,
-
-                    disabledLabelColor =
-                        AppGreen,
-
-                    disabledPlaceholderColor =
-                        AppGrey,
-
-                    disabledBorderColor =
-                        Color(0xFF777777)
-                )
-        )
-    }
-}
-
-
-/* =========================================================
-   STATUS SELECTOR
-   ========================================================= */
-
-@Composable
-fun StatusSelector(
-    status: String,
-    onStatusChanged: (String) -> Unit
-) {
-
-    Text(
-        text = "Status",
-        color = AppWhite,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold
-    )
-
-    Spacer(
-        modifier = Modifier.height(8.dp)
-    )
-
-    Row(
-        modifier =
-            Modifier.fillMaxWidth(),
-
-        horizontalArrangement =
-            Arrangement.spacedBy(10.dp)
-    ) {
-
-        Button(
-            onClick = {
-                onStatusChanged("Pass")
-            },
-
-            modifier =
-                Modifier.weight(1f),
-
-            colors =
-                ButtonDefaults.buttonColors(
-
-                    containerColor =
-                        if (status == "Pass")
-                            Color(0xFF6E8F18)
-                        else
-                            Color(0xFF252D2D)
-                )
-        ) {
-
-            Text("PASS")
-        }
-
-
-        Button(
-            onClick = {
-                onStatusChanged("Fail")
-            },
-
-            modifier =
-                Modifier.weight(1f),
-
-            colors =
-                ButtonDefaults.buttonColors(
-
-                    containerColor =
-                        if (status == "Fail")
-                            Color(0xFF9E4545)
-                        else
-                            Color(0xFF252D2D)
-                )
-        ) {
-
-            Text("FAIL")
-        }
-    }
-}
-
-
-/* =========================================================
-   NOTES FIELD
-   ========================================================= */
-
-@Composable
-fun NotesField(
-    value: String,
-    onValueChange: (String) -> Unit
-) {
-
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-
-        label = {
-            Text("Notes")
-        },
-
-        placeholder = {
-            Text("Additional information")
-        },
-
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(130.dp),
-
-        colors =
-            OutlinedTextFieldDefaults.colors(
-
-                focusedTextColor =
-                    Color.White,
-
-                unfocusedTextColor =
-                    Color.White,
-
-                focusedLabelColor =
-                    AppGreen,
-
-                unfocusedLabelColor =
-                    AppGrey,
-
-                cursorColor =
-                    AppGreen
-            )
-    )
-}
-
-
-/* =========================================================
-   HYGIENE FIELD
-   ========================================================= */
-
-@Composable
-fun HygieneField(
-    value: String,
-    label: String,
-    placeholder: String,
-    onValueChange: (String) -> Unit
-) {
-
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-
-        label = {
-            Text(label)
-        },
-
-        placeholder = {
-            Text(placeholder)
-        },
-
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 14.dp),
-
-        colors =
-            OutlinedTextFieldDefaults.colors(
-
-                focusedTextColor =
-                    Color.White,
-
-                unfocusedTextColor =
-                    Color.White,
-
-                focusedLabelColor =
-                    AppGreen,
-
-                unfocusedLabelColor =
-                    AppGrey,
-
-                cursorColor =
-                    AppGreen
-            )
-    )
-}
-
-
-/* =========================================================
-   RECORDS SCREEN
-   ========================================================= */
-
-@Composable
-fun RecordsScreen(
-    context: Context,
-    onBack: () -> Unit
-) {
-
-    var records by remember {
-        mutableStateOf(
-            loadAllRecords(context)
-        )
-    }
-
-    Surface(
-        modifier =
-            Modifier.fillMaxSize(),
-
-        color =
-            AppBackground
-    ) {
-
-        Column(
-            modifier =
-                Modifier.fillMaxSize()
-        ) {
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = 12.dp,
-                        end = 20.dp,
-                        top = 12.dp,
-                        bottom = 8.dp
-                    ),
-
-                verticalAlignment =
-                    Alignment.CenterVertically
-            ) {
-
-                TextButton(
-                    onClick = onBack
-                ) {
-
-                    Text(
-                        text = "← Back",
-                        color = AppGreen,
-                        fontSize = 16.sp
-                    )
-                }
-
-                Spacer(
-                    modifier =
-                        Modifier.weight(1f)
-                )
-
-                Text(
-                    text =
-                        "${records.size} Records",
-                    color =
-                        AppGrey,
-                    fontSize = 13.sp
-                )
-            }
-
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(
-                        horizontal = 20.dp
-                    )
-            ) {
-
-                Text(
-                    text =
-                        "Inspection Records",
-                    color =
-                        AppWhite,
-                    fontSize =
-                        28.sp,
-                    fontWeight =
-                        FontWeight.Bold
-                )
-
-                Text(
-                    text =
-                        "Hygiene and temperature check history",
-                    color =
-                        AppGrey,
-                    fontSize =
-                        14.sp
-                )
-
-                Spacer(
-                    modifier =
-                        Modifier.height(20.dp)
-                )
-
-
-                if (records.isEmpty()) {
-
-                    EmptyRecords()
-
-                } else {
-
-                    LazyColumn(
-
-                        modifier =
-                            Modifier.fillMaxSize(),
-
-                        verticalArrangement =
-                            Arrangement.spacedBy(
-                                12.dp
-                            ),
-
-                        contentPadding =
-                            PaddingValues(
-                                bottom = 30.dp
-                            )
-                    ) {
-
-                        items(
-                            items = records,
-                            key = {
-                                it.id
-                            }
-                        ) { record ->
-
-                            UnifiedRecordCard(
-                                record = record,
-
-                                onDelete = {
-
-                                    if (
-                                        record.type ==
-                                        "Hygiene"
-                                    ) {
-
-                                        deleteHygieneRecordById(
-                                            context,
-                                            record.id
-                                        )
-
-                                    } else {
-
-                                        deleteTemperatureRecordById(
-                                            context,
-                                            record.id
-                                        )
-                                    }
-
-                                    records =
-                                        loadAllRecords(
-                                            context
-                                        )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-/* =========================================================
-   UNIFIED RECORD
-   ========================================================= */
-
-data class UnifiedRecord(
-    val id: String,
-    val type: String,
+private val Background = Color(0xFF0D1112)
+private val CardColor = Color(0xFF171D1E)
+private val SecondaryText = Color(0xFF9BA4A5)
+private val Lime = Color(0xFFB7E11B)
+private val Danger = Color(0xFFE57373)
+private val White = Color.White
+
+data class HygieneRecord(
+    val id: Long,
     val date: String,
     val time: String,
     val area: String,
     val item: String,
-    val equipment: String,
-    val temperature: String,
     val status: String,
     val staff: String,
     val notes: String
 )
 
+enum class AppScreen {
+    HOME,
+    HYGIENE,
+    TEMPERATURE,
+    CLEANING,
+    RECORDS,
+    CORRECTIVE,
+    STAFF,
+    REPORTS,
+    SETTINGS
+}
 
-/* =========================================================
-   UNIFIED RECORD CARD
-   ========================================================= */
+class MainActivity : ComponentActivity() {
 
-@Composable
-fun UnifiedRecordCard(
-    record: UnifiedRecord,
-    onDelete: () -> Unit
-) {
+    private var currentScreen = AppScreen.HOME
 
-    val statusColor =
-        if (record.status == "Pass")
-            AppGreen
-        else
-            Color(0xFFE57373)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    Card(
-        modifier =
-            Modifier.fillMaxWidth(),
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (currentScreen != AppScreen.HOME) {
+                        currentScreen = AppScreen.HOME
+                        setContent {
+                            HygieneControlApp()
+                        }
+                    } else {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
+                }
+            }
+        )
 
-        shape =
-            RoundedCornerShape(16.dp),
+        setContent {
+            HygieneControlApp()
+        }
+    }
 
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    AppCard
-            )
-    ) {
+    fun navigateTo(screen: AppScreen) {
+        currentScreen = screen
+        setContent {
+            HygieneControlApp()
+        }
+    }
 
-        Column(
-            modifier =
-                Modifier.padding(16.dp)
-        ) {
+    @Composable
+    fun HygieneControlApp() {
 
-            Row(
-                modifier =
-                    Modifier.fillMaxWidth(),
+        val context = LocalContext.current
 
-                verticalAlignment =
-                    Alignment.CenterVertically
+        val records = remember {
+            mutableStateListOf<HygieneRecord>().apply {
+                addAll(loadRecords(context))
+            }
+        }
+
+        MaterialTheme {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = Background
             ) {
 
-                Column(
-                    modifier =
-                        Modifier.weight(1f)
-                ) {
+                when (currentScreen) {
 
-                    Row(
-                        verticalAlignment =
-                            Alignment.CenterVertically
-                    ) {
-
-                        Text(
-                            text =
-                                if (
-                                    record.type ==
-                                    "Temperature"
-                                )
-                                    "Temperature Check"
-                                else
-                                    "Hygiene Check",
-
-                            color =
-                                AppGreen,
-
-                            fontSize =
-                                11.sp,
-
-                            fontWeight =
-                                FontWeight.Bold
+                    AppScreen.HOME -> {
+                        HomeScreen(
+                            records = records,
+                            onNavigate = { navigateTo(it) }
                         )
                     }
 
-                    Spacer(
-                        modifier =
-                            Modifier.height(5.dp)
-                    )
-
-                    Text(
-                        text =
-                            if (
-                                record.type ==
-                                "Temperature"
-                            )
-                                record.equipment.ifBlank {
-                                    "Temperature Check"
-                                }
-                            else
-                                record.item.ifBlank {
-                                    "Hygiene Check"
-                                },
-
-                        color =
-                            AppWhite,
-
-                        fontSize =
-                            17.sp,
-
-                        fontWeight =
-                            FontWeight.Bold
-                    )
-
-                    Spacer(
-                        modifier =
-                            Modifier.height(5.dp)
-                    )
-
-                    Text(
-                        text =
-                            "${record.date}  •  ${record.time}",
-
-                        color =
-                            AppGrey,
-
-                        fontSize =
-                            13.sp
-                    )
-                }
-
-
-                Surface(
-                    shape =
-                        RoundedCornerShape(8.dp),
-
-                    color =
-                        statusColor
-                ) {
-
-                    Text(
-                        text =
-                            record.status.uppercase(),
-
-                        color =
-                            if (
-                                record.status ==
-                                "Pass"
-                            )
-                                Color.Black
-                            else
-                                Color.White,
-
-                        fontSize =
-                            11.sp,
-
-                        fontWeight =
-                            FontWeight.Bold,
-
-                        modifier =
-                            Modifier.padding(
-                                horizontal = 10.dp,
-                                vertical = 6.dp
-                            )
-                    )
-                }
-            }
-
-
-            Spacer(
-                modifier =
-                    Modifier.height(12.dp)
-            )
-
-
-            if (
-                record.type ==
-                "Temperature"
-            ) {
-
-                RecordLine(
-                    title =
-                        "Equipment",
-
-                    value =
-                        record.equipment
-                )
-
-                RecordLine(
-                    title =
-                        "Temperature",
-
-                    value =
-                        if (
-                            record.temperature.isNotBlank()
+                    AppScreen.HYGIENE -> {
+                        HygieneCheckScreen(
+                            onBack = { navigateTo(AppScreen.HOME) },
+                            onSave = { record ->
+                                records.add(0, record)
+                                saveRecords(context, records)
+                                navigateTo(AppScreen.RECORDS)
+                            }
                         )
-                            "${record.temperature} °C"
-                        else
-                            ""
-                )
+                    }
 
-            } else {
+                    AppScreen.RECORDS -> {
+                        RecordsScreen(
+                            records = records,
+                            onBack = { navigateTo(AppScreen.HOME) },
+                            onDelete = { record ->
+                                records.remove(record)
+                                saveRecords(context, records)
+                            }
+                        )
+                    }
 
-                RecordLine(
-                    title =
-                        "Check Area",
+                    AppScreen.SETTINGS -> {
+                        RestaurantSettingsScreen(
+                            onBack = { navigateTo(AppScreen.HOME) }
+                        )
+                    }
 
-                    value =
-                        record.area
-                )
-            }
+                    AppScreen.TEMPERATURE -> {
+                        SimpleScreen(
+                            title = "Temperature Checks",
+                            subtitle = "Fridge, freezer and food temperatures",
+                            onBack = { navigateTo(AppScreen.HOME) }
+                        )
+                    }
 
+                    AppScreen.CLEANING -> {
+                        SimpleScreen(
+                            title = "Cleaning Checks",
+                            subtitle = "Cleaning tasks and completion records",
+                            onBack = { navigateTo(AppScreen.HOME) }
+                        )
+                    }
 
-            RecordLine(
-                title =
-                    "Staff Member",
+                    AppScreen.CORRECTIVE -> {
+                        SimpleScreen(
+                            title = "Corrective Actions",
+                            subtitle = "Record problems and corrective measures",
+                            onBack = { navigateTo(AppScreen.HOME) }
+                        )
+                    }
 
-                value =
-                    record.staff
-            )
+                    AppScreen.STAFF -> {
+                        SimpleScreen(
+                            title = "Staff Checks",
+                            subtitle = "Staff hygiene and training records",
+                            onBack = { navigateTo(AppScreen.HOME) }
+                        )
+                    }
 
-
-            if (
-                record.notes.isNotBlank()
-            ) {
-
-                Spacer(
-                    modifier =
-                        Modifier.height(6.dp)
-                )
-
-                Text(
-                    text = "Notes",
-                    color = AppGrey,
-                    fontSize = 12.sp
-                )
-
-                Text(
-                    text = record.notes,
-                    color = AppWhite,
-                    fontSize = 14.sp
-                )
-            }
-
-
-            Spacer(
-                modifier =
-                    Modifier.height(8.dp)
-            )
-
-
-            TextButton(
-                onClick =
-                    onDelete
-            ) {
-
-                Text(
-                    text =
-                        "Delete record",
-
-                    color =
-                        Color(0xFFE57373),
-
-                    fontSize =
-                        12.sp
-                )
+                    AppScreen.REPORTS -> {
+                        SimpleScreen(
+                            title = "Reports",
+                            subtitle = "Generate inspection reports",
+                            onBack = { navigateTo(AppScreen.HOME) }
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-
-/* =========================================================
-   RECORD LINE
-   ========================================================= */
-
 @Composable
-fun RecordLine(
-    title: String,
-    value: String
+fun HomeScreen(
+    records: List<HygieneRecord>,
+    onNavigate: (AppScreen) -> Unit
 ) {
 
-    if (
-        value.isNotBlank()
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 20.dp)
+            .navigationBarsPadding()
     ) {
 
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        vertical = 3.dp
-                    )
-        ) {
+        item {
+
+            Spacer(modifier = Modifier.height(18.dp))
 
             Text(
-                text =
-                    "$title: ",
-
-                color =
-                    AppGrey,
-
-                fontSize =
-                    13.sp
+                text = "HYGIENE CONTROL",
+                color = Lime,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold
             )
 
             Text(
-                text =
-                    value,
-
-                color =
-                    AppWhite,
-
-                fontSize =
-                    13.sp
+                text = "Restaurant Food Safety Management",
+                color = SecondaryText,
+                fontSize = 17.sp
             )
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            Text(
+                text = "Today's Overview",
+                color = White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+
+                OverviewCard(
+                    modifier = Modifier.weight(1f),
+                    number = records.count {
+                        it.status == "PASS"
+                    }.toString(),
+                    label = "Completed",
+                    numberColor = Lime
+                )
+
+                OverviewCard(
+                    modifier = Modifier.weight(1f),
+                    number = "0",
+                    label = "Pending",
+                    numberColor = Color(0xFFFFB74D)
+                )
+
+                OverviewCard(
+                    modifier = Modifier.weight(1f),
+                    number = records.count {
+                        it.status == "FAIL"
+                    }.toString(),
+                    label = "Issues",
+                    numberColor = Danger
+                )
+            }
+
+            Spacer(modifier = Modifier.height(30.dp))
+
+            Text(
+                text = "Daily Checks",
+                color = Lime,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+        }
+
+        item {
+            MenuCard(
+                title = "Hygiene Checks",
+                subtitle = "Daily food safety and hygiene controls",
+                onClick = { onNavigate(AppScreen.HYGIENE) }
+            )
+        }
+
+        item {
+            MenuCard(
+                title = "Temperature Checks",
+                subtitle = "Fridge, freezer and food temperatures",
+                onClick = { onNavigate(AppScreen.TEMPERATURE) }
+            )
+        }
+
+        item {
+            MenuCard(
+                title = "Cleaning Checks",
+                subtitle = "Cleaning tasks and completion records",
+                onClick = { onNavigate(AppScreen.CLEANING) }
+            )
+        }
+
+        item {
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Compliance",
+                color = Lime,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+        }
+
+        item {
+            MenuCard(
+                title = "Inspection Records",
+                subtitle = "View and manage inspection history",
+                onClick = { onNavigate(AppScreen.RECORDS) }
+            )
+        }
+
+        item {
+            MenuCard(
+                title = "Corrective Actions",
+                subtitle = "Record problems and corrective measures",
+                onClick = { onNavigate(AppScreen.CORRECTIVE) }
+            )
+        }
+
+        item {
+            MenuCard(
+                title = "Staff Checks",
+                subtitle = "Staff hygiene and training records",
+                onClick = { onNavigate(AppScreen.STAFF) }
+            )
+        }
+
+        item {
+            MenuCard(
+                title = "Reports",
+                subtitle = "Generate inspection reports",
+                onClick = { onNavigate(AppScreen.REPORTS) }
+            )
+        }
+
+        item {
+            MenuCard(
+                title = "Restaurant Settings",
+                subtitle = "Restaurant information",
+                onClick = { onNavigate(AppScreen.SETTINGS) }
+            )
+
+            Spacer(modifier = Modifier.height(25.dp))
         }
     }
 }
-
-
-/* =========================================================
-   SAVE HYGIENE RECORD
-   ========================================================= */
-
-fun saveHygieneRecord(
-    context: Context,
-    date: String,
-    time: String,
-    area: String,
-    item: String,
-    status: String,
-    staff: String,
-    notes: String
-) {
-
-    val preferences =
-        context.getSharedPreferences(
-            "hygiene_records",
-            Context.MODE_PRIVATE
-        )
-
-    val existing =
-        preferences.getString(
-            "records",
-            "[]"
-        ) ?: "[]"
-
-    val records =
-        JSONArray(existing)
-
-    val record =
-        JSONObject()
-
-    record.put(
-        "id",
-        System.currentTimeMillis()
-    )
-
-    record.put(
-        "date",
-        date
-    )
-
-    record.put(
-        "time",
-        time
-    )
-
-    record.put(
-        "area",
-        area
-    )
-
-    record.put(
-        "item",
-        item
-    )
-
-    record.put(
-        "status",
-        status
-    )
-
-    record.put(
-        "staff",
-        staff
-    )
-
-    record.put(
-        "notes",
-        notes
-    )
-
-    records.put(record)
-
-    preferences.edit()
-        .putString(
-            "records",
-            records.toString()
-        )
-        .apply()
-}
-
-
-/* =========================================================
-   SAVE TEMPERATURE RECORD
-   ========================================================= */
-
-fun saveTemperatureRecord(
-    context: Context,
-    date: String,
-    time: String,
-    equipment: String,
-    temperature: String,
-    status: String,
-    staff: String,
-    notes: String
-) {
-
-    val preferences =
-        context.getSharedPreferences(
-            "temperature_records",
-            Context.MODE_PRIVATE
-        )
-
-    val existing =
-        preferences.getString(
-            "records",
-            "[]"
-        ) ?: "[]"
-
-    val records =
-        JSONArray(existing)
-
-    val record =
-        JSONObject()
-
-    record.put(
-        "id",
-        System.currentTimeMillis()
-    )
-
-    record.put(
-        "date",
-        date
-    )
-
-    record.put(
-        "time",
-        time
-    )
-
-    record.put(
-        "equipment",
-        equipment
-    )
-
-    record.put(
-        "temperature",
-        temperature
-    )
-
-    record.put(
-        "status",
-        status
-    )
-
-    record.put(
-        "staff",
-        staff
-    )
-
-    record.put(
-        "notes",
-        notes
-    )
-
-    records.put(record)
-
-    preferences.edit()
-        .putString(
-            "records",
-            records.toString()
-        )
-        .apply()
-}
-
-
-/* =========================================================
-   LOAD ALL RECORDS
-   ========================================================= */
-
-fun loadAllRecords(
-    context: Context
-): List<UnifiedRecord> {
-
-    val result =
-        mutableListOf<UnifiedRecord>()
-
-
-    /* HYGIENE */
-
-    val hygienePreferences =
-        context.getSharedPreferences(
-            "hygiene_records",
-            Context.MODE_PRIVATE
-        )
-
-    val hygieneData =
-        hygienePreferences.getString(
-            "records",
-            "[]"
-        ) ?: "[]"
-
-    val hygieneArray =
-        JSONArray(hygieneData)
-
-    for (
-        i in 0 until hygieneArray.length()
-    ) {
-
-        val obj =
-            hygieneArray.getJSONObject(i)
-
-        result.add(
-            UnifiedRecord(
-
-                id =
-                    obj.optString(
-                        "id",
-                        "h$i"
-                    ),
-
-                type =
-                    "Hygiene",
-
-                date =
-                    obj.optString(
-                        "date"
-                    ),
-
-                time =
-                    obj.optString(
-                        "time"
-                    ),
-
-                area =
-                    obj.optString(
-                        "area"
-                    ),
-
-                item =
-                    obj.optString(
-                        "item"
-                    ),
-
-                equipment =
-                    "",
-
-                temperature =
-                    "",
-
-                status =
-                    obj.optString(
-                        "status",
-                        "Pass"
-                    ),
-
-                staff =
-                    obj.optString(
-                        "staff"
-                    ),
-
-                notes =
-                    obj.optString(
-                        "notes"
-                    )
-            )
-        )
-    }
-
-
-    /* TEMPERATURE */
-
-    val temperaturePreferences =
-        context.getSharedPreferences(
-            "temperature_records",
-            Context.MODE_PRIVATE
-        )
-
-    val temperatureData =
-        temperaturePreferences.getString(
-            "records",
-            "[]"
-        ) ?: "[]"
-
-    val temperatureArray =
-        JSONArray(
-            temperatureData
-        )
-
-    for (
-        i in 0 until temperatureArray.length()
-    ) {
-
-        val obj =
-            temperatureArray.getJSONObject(i)
-
-        result.add(
-            UnifiedRecord(
-
-                id =
-                    obj.optString(
-                        "id",
-                        "t$i"
-                    ),
-
-                type =
-                    "Temperature",
-
-                date =
-                    obj.optString(
-                        "date"
-                    ),
-
-                time =
-                    obj.optString(
-                        "time"
-                    ),
-
-                area =
-                    "",
-
-                item =
-                    "",
-
-                equipment =
-                    obj.optString(
-                        "equipment"
-                    ),
-
-                temperature =
-                    obj.optString(
-                        "temperature"
-                    ),
-
-                status =
-                    obj.optString(
-                        "status",
-                        "Pass"
-                    ),
-
-                staff =
-                    obj.optString(
-                        "staff"
-                    ),
-
-                notes =
-                    obj.optString(
-                        "notes"
-                    )
-            )
-        )
-    }
-
-
-    return result.sortedByDescending {
-
-        it.id.toLongOrNull()
-            ?: 0L
-    }
-}
-
-
-/* =========================================================
-   DELETE HYGIENE BY ID
-   ========================================================= */
-
-fun deleteHygieneRecordById(
-    context: Context,
-    id: String
-) {
-
-    val preferences =
-        context.getSharedPreferences(
-            "hygiene_records",
-            Context.MODE_PRIVATE
-        )
-
-    val data =
-        preferences.getString(
-            "records",
-            "[]"
-        ) ?: "[]"
-
-    val oldArray =
-        JSONArray(data)
-
-    val newArray =
-        JSONArray()
-
-    for (
-        i in 0 until oldArray.length()
-    ) {
-
-        val obj =
-            oldArray.getJSONObject(i)
-
-        if (
-            obj.optString("id") != id
-        ) {
-
-            newArray.put(obj)
-        }
-    }
-
-    preferences.edit()
-        .putString(
-            "records",
-            newArray.toString()
-        )
-        .apply()
-}
-
-
-/* =========================================================
-   DELETE TEMPERATURE BY ID
-   ========================================================= */
-
-fun deleteTemperatureRecordById(
-    context: Context,
-    id: String
-) {
-
-    val preferences =
-        context.getSharedPreferences(
-            "temperature_records",
-            Context.MODE_PRIVATE
-        )
-
-    val data =
-        preferences.getString(
-            "records",
-            "[]"
-        ) ?: "[]"
-
-    val oldArray =
-        JSONArray(data)
-
-    val newArray =
-        JSONArray()
-
-    for (
-        i in 0 until oldArray.length()
-    ) {
-
-        val obj =
-            oldArray.getJSONObject(i)
-
-        if (
-            obj.optString("id") != id
-        ) {
-
-            newArray.put(obj)
-        }
-    }
-
-    preferences.edit()
-        .putString(
-            "records",
-            newArray.toString()
-        )
-        .apply()
-}
-
-
-/* =========================================================
-   EMPTY RECORDS
-   ========================================================= */
 
 @Composable
-fun EmptyRecords() {
-
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(
-                    top = 80.dp
-                ),
-
-        horizontalAlignment =
-            Alignment.CenterHorizontally
-    ) {
-
-        Text(
-            text =
-                "No records yet",
-
-            color =
-                AppWhite,
-
-            fontSize =
-                20.sp,
-
-            fontWeight =
-                FontWeight.Bold
-        )
-
-        Spacer(
-            modifier =
-                Modifier.height(8.dp)
-        )
-
-        Text(
-            text =
-                "Saved checks will appear here.",
-
-            color =
-                AppGrey,
-
-            fontSize =
-                14.sp
-        )
-    }
-}
-
-
-/* =========================================================
-   STATUS CARD
-   ========================================================= */
-
-@Composable
-fun StatusCard(
+fun OverviewCard(
     modifier: Modifier,
     number: String,
-    title: String,
-    color: Color
+    label: String,
+    numberColor: Color
 ) {
 
     Card(
-        modifier =
-            modifier,
-
-        shape =
-            RoundedCornerShape(14.dp),
-
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    AppCard
-            )
+        modifier = modifier.height(105.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = CardColor
+        ),
+        shape = RoundedCornerShape(20.dp)
     ) {
 
         Column(
-            modifier =
-                Modifier.padding(14.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
 
             Text(
-                text =
-                    number,
-
-                color =
-                    color,
-
-                fontSize =
-                    25.sp,
-
-                fontWeight =
-                    FontWeight.Bold
-            )
-
-            Spacer(
-                modifier =
-                    Modifier.height(4.dp)
+                text = number,
+                color = numberColor,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold
             )
 
             Text(
-                text =
-                    title,
-
-                color =
-                    AppGrey,
-
-                fontSize =
-                    11.sp
+                text = label,
+                color = SecondaryText,
+                fontSize = 14.sp
             )
         }
     }
 }
 
-
-/* =========================================================
-   SECTION TITLE
-   ========================================================= */
-
 @Composable
-fun SectionTitle(
-    title: String,
-    color: Color
-) {
-
-    Text(
-        text =
-            title,
-
-        color =
-            color,
-
-        fontSize =
-            18.sp,
-
-        fontWeight =
-            FontWeight.Bold,
-
-        modifier =
-            Modifier.padding(
-                bottom = 8.dp
-            )
-    )
-}
-
-
-/* =========================================================
-   DASHBOARD ACTION CARD
-   ========================================================= */
-
-@Composable
-fun DashboardActionCard(
+fun MenuCard(
     title: String,
     subtitle: String,
-    onClick: (() -> Unit)? = null
+    onClick: () -> Unit
 ) {
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                vertical = 5.dp
-            )
-            .then(
-
-                if (
-                    onClick != null
-                ) {
-
-                    Modifier.clickable {
-                        onClick()
-                    }
-
-                } else {
-
-                    Modifier
-                }
-            ),
-
-        shape =
-            RoundedCornerShape(15.dp),
-
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    AppCard
-            )
+            .padding(vertical = 6.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = CardColor
+        ),
+        shape = RoundedCornerShape(22.dp)
     ) {
 
         Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(17.dp),
-
-            verticalAlignment =
-                Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 28.dp,
+                    vertical = 20.dp
+                ),
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
             Column(
-                modifier =
-                    Modifier.weight(1f)
+                modifier = Modifier.weight(1f)
             ) {
 
                 Text(
-                    text =
-                        title,
-
-                    color =
-                        AppWhite,
-
-                    fontSize =
-                        16.sp,
-
-                    fontWeight =
-                        FontWeight.Bold
+                    text = title,
+                    color = White,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold
                 )
 
-                Spacer(
-                    modifier =
-                        Modifier.height(4.dp)
-                )
+                Spacer(modifier = Modifier.height(5.dp))
 
                 Text(
-                    text =
-                        subtitle,
-
-                    color =
-                        AppGrey,
-
-                    fontSize =
-                        12.sp
+                    text = subtitle,
+                    color = SecondaryText,
+                    fontSize = 14.sp
                 )
             }
 
             Text(
-                text =
-                    "›",
-
-                color =
-                    AppGreen,
-
-                fontSize =
-                    28.sp
+                text = "›",
+                color = Lime,
+                fontSize = 38.sp,
+                fontWeight = FontWeight.Bold
             )
         }
     }
 }
 
-
-/* =========================================================
-   BOTTOM NAVIGATION
-   ========================================================= */
-
 @Composable
-fun BottomNavigation(
-    onRecordsClick: () -> Unit,
-    onSettingsClick: () -> Unit
+fun HygieneCheckScreen(
+    onBack: () -> Unit,
+    onSave: (HygieneRecord) -> Unit
 ) {
 
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(
-                    Color(0xFF151A1A)
-                )
-                .navigationBarsPadding()
-                .padding(
-                    vertical = 12.dp
-                ),
+    val context = LocalContext.current
 
-        horizontalArrangement =
-            Arrangement.SpaceEvenly,
+    var date by remember { mutableStateOf("") }
+    var time by remember { mutableStateOf("") }
+    var area by remember { mutableStateOf("") }
+    var item by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf("PASS") }
+    var staff by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
 
-        verticalAlignment =
-            Alignment.CenterVertically
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp)
     ) {
 
-        BottomItem(
-            title = "Home",
-            color = AppGreen
-        )
+        item {
 
-        BottomItem(
-            title = "Checks",
-            color = AppGrey
-        )
+            Spacer(modifier = Modifier.height(12.dp))
 
-        BottomItem(
-            title = "Records",
-            color = AppGrey,
-            onClick =
-                onRecordsClick
-        )
-
-        BottomItem(
-            title = "Reports",
-            color = AppGrey
-        )
-
-        BottomItem(
-            title = "Settings",
-            color = AppGrey,
-            onClick =
-                onSettingsClick
-        )
-    }
-}
-
-
-/* =========================================================
-   BOTTOM ITEM
-   ========================================================= */
-
-@Composable
-fun BottomItem(
-    title: String,
-    color: Color,
-    onClick: (() -> Unit)? = null
-) {
-
-    Text(
-        text =
-            title,
-
-        color =
-            color,
-
-        fontSize =
-            12.sp,
-
-        fontWeight =
-            FontWeight.Bold,
-
-        modifier =
-            Modifier
-                .padding(
-                    horizontal = 8.dp
-                )
-                .clickable {
-                    onClick?.invoke()
+            Text(
+                text = "← Back",
+                color = Lime,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable {
+                    onBack()
                 }
-    )
-}
-
-
-/* =========================================================
-   RESTAURANT SETTINGS
-   ========================================================= */
-
-@Composable
-fun RestaurantSettings(
-    context: Context,
-    onBack: () -> Unit
-) {
-
-    val preferences =
-        remember {
-
-            context.getSharedPreferences(
-                "restaurant_settings",
-                Context.MODE_PRIVATE
             )
-        }
 
-    var restaurantName by remember {
+            Spacer(modifier = Modifier.height(22.dp))
 
-        mutableStateOf(
-            preferences.getString(
-                "restaurantName",
-                ""
-            ) ?: ""
-        )
-    }
+            Text(
+                text = "Hygiene Check",
+                color = White,
+                fontSize = 34.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-    var address by remember {
+            Text(
+                text = "Record a food safety and hygiene check",
+                color = SecondaryText,
+                fontSize = 17.sp
+            )
 
-        mutableStateOf(
-            preferences.getString(
-                "address",
-                ""
-            ) ?: ""
-        )
-    }
+            Spacer(modifier = Modifier.height(28.dp))
 
-    var phone by remember {
+            DateField(
+                value = date,
+                onClick = {
+                    val calendar = Calendar.getInstance()
 
-        mutableStateOf(
-            preferences.getString(
-                "phone",
-                ""
-            ) ?: ""
-        )
-    }
+                    DatePickerDialog(
+                        context,
+                        { _, year, month, day ->
+                            date = String.format(
+                                "%02d/%02d/%04d",
+                                day,
+                                month + 1,
+                                year
+                            )
+                        },
+                        calendar.get(Calendar.YEAR),
+                        calendar.get(Calendar.MONTH),
+                        calendar.get(Calendar.DAY_OF_MONTH)
+                    ).show()
+                }
+            )
 
-    var email by remember {
+            Spacer(modifier = Modifier.height(16.dp))
 
-        mutableStateOf(
-            preferences.getString(
-                "email",
-                ""
-            ) ?: ""
-        )
-    }
+            TimeField(
+                value = time,
+                onClick = {
+                    val calendar = Calendar.getInstance()
 
-    var manager by remember {
+                    TimePickerDialog(
+                        context,
+                        { _, hour, minute ->
+                            time = String.format(
+                                "%02d:%02d",
+                                hour,
+                                minute
+                            )
+                        },
+                        calendar.get(Calendar.HOUR_OF_DAY),
+                        calendar.get(Calendar.MINUTE),
+                        true
+                    ).show()
+                }
+            )
 
-        mutableStateOf(
-            preferences.getString(
-                "manager",
-                ""
-            ) ?: ""
-        )
-    }
+            Spacer(modifier = Modifier.height(16.dp))
 
-    var saved by remember {
-        mutableStateOf(false)
-    }
+            WhiteTextField(
+                value = area,
+                onValueChange = { area = it },
+                label = "Check Area"
+            )
 
+            Spacer(modifier = Modifier.height(16.dp))
 
-    Surface(
-        modifier =
-            Modifier.fillMaxSize(),
+            WhiteTextField(
+                value = item,
+                onValueChange = { item = it },
+                label = "Hygiene Item"
+            )
 
-        color =
-            AppBackground
-    ) {
+            Spacer(modifier = Modifier.height(22.dp))
 
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(
-                        rememberScrollState()
+            Text(
+                text = "Status",
+                color = White,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        status = "PASS"
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor =
+                            if (status == "PASS") Lime
+                            else CardColor,
+                        contentColor =
+                            if (status == "PASS") Color.Black
+                            else White
                     )
-                    .imePadding()
-                    .navigationBarsPadding()
-                    .padding(20.dp)
-        ) {
+                ) {
+                    Text("PASS")
+                }
 
-            TextButton(
-                onClick =
-                    onBack
-            ) {
-
-                Text(
-                    text =
-                        "← Back",
-
-                    color =
-                        AppGreen,
-
-                    fontSize =
-                        16.sp
-                )
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        status = "FAIL"
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor =
+                            if (status == "FAIL") Danger
+                            else CardColor,
+                        contentColor = White
+                    )
+                ) {
+                    Text("FAIL")
+                }
             }
 
-            Spacer(
-                modifier =
-                    Modifier.height(8.dp)
+            Spacer(modifier = Modifier.height(18.dp))
+
+            WhiteTextField(
+                value = staff,
+                onValueChange = { staff = it },
+                label = "Staff Member"
             )
 
-            Text(
-                text =
-                    "Restaurant Settings",
+            Spacer(modifier = Modifier.height(16.dp))
 
-                color =
-                    AppWhite,
-
-                fontSize =
-                    28.sp,
-
-                fontWeight =
-                    FontWeight.Bold
+            WhiteTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = "Notes",
+                singleLine = false,
+                minLines = 4
             )
 
-            Spacer(
-                modifier =
-                    Modifier.height(24.dp)
-            )
-
-
-            SettingField(
-                value =
-                    restaurantName,
-
-                label =
-                    "Restaurant Name",
-
-                onValueChange = {
-                    restaurantName = it
-                    saved = false
-                }
-            )
-
-
-            SettingField(
-                value =
-                    address,
-
-                label =
-                    "Address",
-
-                onValueChange = {
-                    address = it
-                    saved = false
-                }
-            )
-
-
-            SettingField(
-                value =
-                    phone,
-
-                label =
-                    "Phone",
-
-                onValueChange = {
-                    phone = it
-                    saved = false
-                }
-            )
-
-
-            SettingField(
-                value =
-                    email,
-
-                label =
-                    "Email",
-
-                onValueChange = {
-                    email = it
-                    saved = false
-                }
-            )
-
-
-            SettingField(
-                value =
-                    manager,
-
-                label =
-                    "Manager / Owner",
-
-                onValueChange = {
-                    manager = it
-                    saved = false
-                }
-            )
-
-
-            Spacer(
-                modifier =
-                    Modifier.height(20.dp)
-            )
-
+            Spacer(modifier = Modifier.height(22.dp))
 
             Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(58.dp),
                 onClick = {
 
-                    preferences.edit()
+                    if (
+                        date.isNotBlank() &&
+                        time.isNotBlank() &&
+                        area.isNotBlank() &&
+                        item.isNotBlank()
+                    ) {
 
-                        .putString(
-                            "restaurantName",
-                            restaurantName
+                        onSave(
+                            HygieneRecord(
+                                id = System.currentTimeMillis(),
+                                date = date,
+                                time = time,
+                                area = area,
+                                item = item,
+                                status = status,
+                                staff = staff,
+                                notes = notes
+                            )
                         )
-
-                        .putString(
-                            "address",
-                            address
-                        )
-
-                        .putString(
-                            "phone",
-                            phone
-                        )
-
-                        .putString(
-                            "email",
-                            email
-                        )
-
-                        .putString(
-                            "manager",
-                            manager
-                        )
-
-                        .apply()
-
-                    saved = true
+                    }
                 },
-
-                modifier =
-                    Modifier.fillMaxWidth()
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Lime,
+                    contentColor = Color.Black
+                ),
+                shape = RoundedCornerShape(30.dp)
             ) {
 
                 Text(
-                    text =
-                        "Save Restaurant Information"
+                    text = "Save Hygiene Check",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
 
-
-            if (saved) {
-
-                Spacer(
-                    modifier =
-                        Modifier.height(12.dp)
-                )
-
-                Text(
-                    text =
-                        "Information saved successfully.",
-
-                    color =
-                        AppGreen
-                )
-            }
-
-
-            Spacer(
-                modifier =
-                    Modifier.height(30.dp)
-            )
+            Spacer(modifier = Modifier.height(35.dp))
         }
     }
 }
 
+@Composable
+fun DateField(
+    value: String,
+    onClick: () -> Unit
+) {
 
-/* =========================================================
-   SETTINGS FIELD
-   ========================================================= */
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            enabled = false,
+            label = {
+                Text("Record Date")
+            },
+            placeholder = {
+                Text("Select date")
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors()
+        )
+    }
+}
 
 @Composable
-fun SettingField(
+fun TimeField(
     value: String,
+    onClick: () -> Unit
+) {
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            enabled = false,
+            label = {
+                Text("Time")
+            },
+            placeholder = {
+                Text("Select time")
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors()
+        )
+    }
+}
+
+@Composable
+fun WhiteTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
     label: String,
-    onValueChange: (String) -> Unit
+    singleLine: Boolean = true,
+    minLines: Int = 1
 ) {
 
     OutlinedTextField(
-        value =
-            value,
-
-        onValueChange =
-            onValueChange,
-
+        value = value,
+        onValueChange = onValueChange,
         label = {
             Text(label)
         },
-
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(
-                    bottom = 14.dp
-                ),
-
-        colors =
-            OutlinedTextFieldDefaults.colors(
-
-                focusedTextColor =
-                    Color.White,
-
-                unfocusedTextColor =
-                    Color.White,
-
-                focusedLabelColor =
-                    AppGreen,
-
-                unfocusedLabelColor =
-                    AppGrey,
-
-                cursorColor =
-                    AppGreen
-            )
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = singleLine,
+        minLines = minLines,
+        colors = fieldColors()
     )
+}
+
+@Composable
+fun fieldColors() =
+    androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+        focusedTextColor = White,
+        unfocusedTextColor = White,
+        disabledTextColor = White,
+        focusedLabelColor = Lime,
+        unfocusedLabelColor = SecondaryText,
+        disabledLabelColor = SecondaryText,
+        focusedBorderColor = Lime,
+        unfocusedBorderColor = Color(0xFF6F7778),
+        disabledBorderColor = Color(0xFF6F7778),
+        cursorColor = Lime
+    )
+
+@Composable
+fun RecordsScreen(
+    records: List<HygieneRecord>,
+    onBack: () -> Unit,
+    onDelete: (HygieneRecord) -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
+    ) {
+
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp)
+        ) {
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "← Back",
+                color = Lime,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable {
+                    onBack()
+                }
+            )
+
+            Spacer(modifier = Modifier.height(22.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Column {
+
+                    Text(
+                        text = "Inspection Records",
+                        color = White,
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = "Hygiene check history",
+                        color = SecondaryText,
+                        fontSize = 17.sp
+                    )
+                }
+
+                Text(
+                    text = "${records.size} Records",
+                    color = SecondaryText
+                )
+            }
+
+            Spacer(modifier = Modifier.height(15.dp))
+        }
+
+        if (records.isEmpty()) {
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+
+                Text(
+                    text = "No records yet",
+                    color = SecondaryText,
+                    fontSize = 18.sp
+                )
+            }
+
+        } else {
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+            ) {
+
+                items(
+                    items = records,
+                    key = { it.id }
+                ) { record ->
+
+                    RecordCard(
+                        record = record,
+                        onDelete = {
+                            onDelete(record)
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RecordCard(
+    record: HygieneRecord,
+    onDelete: () -> Unit
+) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 7.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = CardColor
+        ),
+        shape = RoundedCornerShape(22.dp)
+    ) {
+
+        Column(
+            modifier = Modifier.padding(28.dp)
+        ) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = record.item,
+                    color = White,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Text(
+                    text = record.status,
+                    color = if (record.status == "PASS") Color.Black else White,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .background(
+                            if (record.status == "PASS") Lime else Danger,
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(
+                            horizontal = 16.dp,
+                            vertical = 8.dp
+                        )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "${record.date} • ${record.time}",
+                color = SecondaryText,
+                fontSize = 15.sp
+            )
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Text(
+                text = "Check Area: ${record.area}",
+                color = SecondaryText,
+                fontSize = 16.sp
+            )
+
+            Spacer(modifier = Modifier.height(7.dp))
+
+            Text(
+                text = "Staff Member: ${record.staff}",
+                color = SecondaryText,
+                fontSize = 16.sp
+            )
+
+            if (record.notes.isNotBlank()) {
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(
+                    text = "Notes",
+                    color = SecondaryText,
+                    fontSize = 15.sp
+                )
+
+                Text(
+                    text = record.notes,
+                    color = White,
+                    fontSize = 16.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            TextButton(
+                onClick = onDelete
+            ) {
+
+                Text(
+                    text = "Delete record",
+                    color = Danger,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun RestaurantSettingsScreen(
+    onBack: () -> Unit
+) {
+
+    var restaurantName by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var manager by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+
+        val preferences = context.getSharedPreferences(
+            "restaurant_settings",
+            Context.MODE_PRIVATE
+        )
+
+        restaurantName =
+            preferences.getString("name", "") ?: ""
+
+        address =
+            preferences.getString("address", "") ?: ""
+
+        phone =
+            preferences.getString("phone", "") ?: ""
+
+        email =
+            preferences.getString("email", "") ?: ""
+
+        manager =
+            preferences.getString("manager", "") ?: ""
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp)
+    ) {
+
+        item {
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "← Back",
+                color = Lime,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable {
+                    onBack()
+                }
+            )
+
+            Spacer(modifier = Modifier.height(22.dp))
+
+            Text(
+                text = "Restaurant Settings",
+                color = White,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(25.dp))
+
+            WhiteTextField(
+                value = restaurantName,
+                onValueChange = { restaurantName = it },
+                label = "Restaurant Name"
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            WhiteTextField(
+                value = address,
+                onValueChange = { address = it },
+                label = "Address"
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            WhiteTextField(
+                value = phone,
+                onValueChange = { phone = it },
+                label = "Phone"
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            WhiteTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = "Email"
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            WhiteTextField(
+                value = manager,
+                onValueChange = { manager = it },
+                label = "Manager / Owner"
+            )
+
+            Spacer(modifier = Modifier.height(25.dp))
+
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(58.dp),
+                onClick = {
+
+                    context.getSharedPreferences(
+                        "restaurant_settings",
+                        Context.MODE_PRIVATE
+                    )
+                        .edit()
+                        .putString("name", restaurantName)
+                        .putString("address", address)
+                        .putString("phone", phone)
+                        .putString("email", email)
+                        .putString("manager", manager)
+                        .apply()
+
+                    onBack()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Lime,
+                    contentColor = Color.Black
+                ),
+                shape = RoundedCornerShape(30.dp)
+            ) {
+
+                Text(
+                    text = "Save Restaurant Information",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(35.dp))
+        }
+    }
+}
+
+@Composable
+fun SimpleScreen(
+    title: String,
+    subtitle: String,
+    onBack: () -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 20.dp)
+            .navigationBarsPadding()
+    ) {
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "← Back",
+            color = Lime,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.clickable {
+                onBack()
+            }
+        )
+
+        Spacer(modifier = Modifier.height(25.dp))
+
+        Text(
+            text = title,
+            color = White,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = subtitle,
+            color = SecondaryText,
+            fontSize = 17.sp
+        )
+
+        Spacer(modifier = Modifier.height(35.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = CardColor
+            ),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+
+            Text(
+                text = "This section is ready for the next step.",
+                color = White,
+                fontSize = 17.sp,
+                modifier = Modifier.padding(25.dp)
+            )
+        }
+    }
+}
+
+fun saveRecords(
+    context: Context,
+    records: List<HygieneRecord>
+) {
+
+    val array = JSONArray()
+
+    records.forEach { record ->
+
+        val objectRecord = JSONObject()
+
+        objectRecord.put("id", record.id)
+        objectRecord.put("date", record.date)
+        objectRecord.put("time", record.time)
+        objectRecord.put("area", record.area)
+        objectRecord.put("item", record.item)
+        objectRecord.put("status", record.status)
+        objectRecord.put("staff", record.staff)
+        objectRecord.put("notes", record.notes)
+
+        array.put(objectRecord)
+    }
+
+    context.getSharedPreferences(
+        "hygiene_records",
+        Context.MODE_PRIVATE
+    )
+        .edit()
+        .putString("records", array.toString())
+        .apply()
+}
+
+fun loadRecords(
+    context: Context
+): List<HygieneRecord> {
+
+    val preferences = context.getSharedPreferences(
+        "hygiene_records",
+        Context.MODE_PRIVATE
+    )
+
+    val json = preferences.getString(
+        "records",
+        null
+    ) ?: return emptyList()
+
+    return try {
+
+        val array = JSONArray(json)
+        val result = mutableListOf<HygieneRecord>()
+
+        for (i in 0 until array.length()) {
+
+            val item = array.getJSONObject(i)
+
+            result.add(
+                HygieneRecord(
+                    id = item.optLong("id"),
+                    date = item.optString("date"),
+                    time = item.optString("time"),
+                    area = item.optString("area"),
+                    item = item.optString("item"),
+                    status = item.optString("status"),
+                    staff = item.optString("staff"),
+                    notes = item.optString("notes")
+                )
+            )
+        }
+
+        result
+
+    } catch (e: Exception) {
+
+        emptyList()
+    }
 }
